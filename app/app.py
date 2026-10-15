@@ -2,6 +2,7 @@
 import csv
 import io
 import os
+import re
 import secrets
 import sqlite3
 import sys
@@ -73,7 +74,36 @@ def init_db():
     db = sqlite3.connect(app.config["DATABASE"])
     with open(os.path.join(BASE_DIR, "schema.sql"), encoding="utf-8") as f:
         db.executescript(f.read())
+    migrate(db)
     db.close()
+
+
+# Spalten, die nach der ersten Version dazugekommen sind: (Tabelle, Spalte, Definition)
+MIGRATIONS = [
+    ("students", "birthday", "TEXT"),
+    ("students", "guardians", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "street", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "zip", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "city", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "phone", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "phone2", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "email", "TEXT NOT NULL DEFAULT ''"),
+    ("students", "notes", "TEXT NOT NULL DEFAULT ''"),
+]
+
+
+def migrate(db):
+    for table, column, definition in MIGRATIONS:
+        existing = {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
+        if column in existing:
+            continue
+        try:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+            db.commit()
+        except sqlite3.OperationalError as e:
+            # mehrere Gunicorn-Worker starten gleichzeitig – einer war schneller
+            if "duplicate column" not in str(e):
+                raise
 
 
 init_db()
@@ -488,6 +518,37 @@ def open_per_student(db):
     return result
 
 
+# Kontaktfelder der Klassenliste: (Spalte, Bezeichnung, max. Länge)
+CONTACT_FIELDS = [
+    ("guardians", "Erziehungsberechtigte", 200),
+    ("street", "Straße", 120),
+    ("zip", "PLZ", 10),
+    ("city", "Ort", 80),
+    ("phone", "Telefon", 40),
+    ("phone2", "Telefon 2 / mobil", 40),
+    ("email", "E-Mail", 120),
+    ("notes", "Notiz", 500),
+]
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def read_student_form(f):
+    data = {"name": (f.get("name") or "").strip()[:100]}
+    if not data["name"]:
+        raise ValueError("Bitte einen Namen angeben.")
+    for key, _label, maxlen in CONTACT_FIELDS:
+        data[key] = (f.get(key) or "").strip()[:maxlen]
+    data["email"] = data["email"].replace(" ", "")
+    for addr in filter(None, (a.strip() for a in data["email"].replace(";", ",").split(","))):
+        if not EMAIL_RE.match(addr):
+            raise ValueError(f"Ungültige E-Mail-Adresse: {addr}")
+    data["birthday"] = parse_date(f.get("birthday"), default_today=False)
+    return data
+
+
+STUDENT_COLUMNS = ["name", "birthday"] + [k for k, _l, _m in CONTACT_FIELDS]
+
+
 @app.route("/schueler", methods=["GET", "POST"])
 @login_required
 def students():
@@ -495,6 +556,17 @@ def students():
     if request.method == "POST":
         if not can("kasse"):
             abort(403)
+        if request.form.get("action") == "single":
+            try:
+                data = read_student_form(request.form)
+                db.execute(f"INSERT INTO students ({', '.join(STUDENT_COLUMNS)}) "
+                           f"VALUES ({', '.join('?' * len(STUDENT_COLUMNS))})",
+                           [data[c] for c in STUDENT_COLUMNS])
+                db.commit()
+                flash(f"{data['name']} angelegt.", "ok")
+            except ValueError as e:
+                flash(str(e), "error")
+            return redirect(url_for("students"))
         names = [n.strip()[:100] for n in request.form.get("names", "").splitlines() if n.strip()]
         for n in names:
             db.execute("INSERT INTO students (name) VALUES (?)", (n,))
@@ -503,7 +575,20 @@ def students():
               "ok" if names else "error")
         return redirect(url_for("students"))
     rows = db.execute("SELECT * FROM students ORDER BY active DESC, name COLLATE NOCASE").fetchall()
-    return render_template("students.html", rows=rows, open_map=open_per_student(db))
+    return render_template("students.html", rows=rows, open_map=open_per_student(db),
+                           fields=CONTACT_FIELDS)
+
+
+@app.route("/export/klassenliste.csv")
+@login_required
+def export_students():
+    rows = get_db().execute("SELECT * FROM students ORDER BY active DESC, name COLLATE NOCASE").fetchall()
+    return csv_response(
+        f"klassenliste_{date.today().isoformat()}.csv",
+        ["Name", "Geburtstag"] + [label for _k, label, _m in CONTACT_FIELDS] + ["Status"],
+        [[csv_text(r["name"]), date_de(r["birthday"])]
+         + [csv_text(r[k]) for k, _l, _m in CONTACT_FIELDS]
+         + ["aktiv" if r["active"] else "inaktiv"] for r in rows])
 
 
 @app.route("/schueler/<int:sid>")
@@ -518,7 +603,7 @@ def student(sid):
                 status.append({"c": col, **i})
     rows = db.execute(BOOKING_SELECT + " WHERE b.student_id = ? ORDER BY b.booking_date DESC, b.id DESC",
                       (sid,)).fetchall()
-    return render_template("student.html", st=st, status=status, rows=rows)
+    return render_template("student.html", st=st, status=status, rows=rows, fields=CONTACT_FIELDS)
 
 
 @app.route("/schueler/<int:sid>/bearbeiten", methods=["POST"])
@@ -530,10 +615,13 @@ def student_edit(sid):
         db.execute("UPDATE students SET active = ? WHERE id = ?", (0 if st["active"] else 1, sid))
         flash("Status geändert.", "ok")
     else:
-        name = request.form.get("name", "").strip()[:100]
-        if name:
-            db.execute("UPDATE students SET name = ? WHERE id = ?", (name, sid))
-            flash("Name geändert.", "ok")
+        try:
+            data = read_student_form(request.form)
+            db.execute(f"UPDATE students SET {', '.join(c + ' = ?' for c in STUDENT_COLUMNS)} WHERE id = ?",
+                       [data[c] for c in STUDENT_COLUMNS] + [sid])
+            flash("Gespeichert.", "ok")
+        except ValueError as e:
+            flash(str(e), "error")
     db.commit()
     return redirect(url_for("student", sid=sid))
 

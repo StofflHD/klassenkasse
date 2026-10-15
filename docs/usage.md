@@ -3,7 +3,8 @@
 ## Erste Schritte
 
 1. Als Administrator anmelden.
-2. **Schüler** → Namen eintragen (einer pro Zeile, mehrere auf einmal möglich).
+2. **Klassenliste** → Schüler/innen eintragen: einzeln mit Kontaktdaten oder mehrere Namen
+   auf einmal (einer pro Zeile) und die Kontaktdaten danach ergänzen.
 3. **Benutzer** → Konten für Kassenwart/in und Elternvertretung anlegen.
 4. **Sammlungen** → erste Sammlung anlegen, z. B. „Ausflug Zoo“, 12 €, Fälligkeitsdatum.
 
@@ -42,9 +43,24 @@ jeden aktiven Schüler, was bezahlt und was offen ist; eine Zahlung ist dort mit
 gebucht, Teilzahlungen sind möglich. Abgeschlossene Sammlungen nehmen keine Zahlungen mehr
 an und zählen nicht mehr bei den offenen Beträgen; sie lassen sich wieder öffnen.
 
+## Klassenliste
+
+Die Klassenliste zeigt alle Schüler/innen als Tabelle: Name (mit Notiz), Geburtstag,
+Erziehungsberechtigte, Anschrift, Telefon, E-Mail und den offenen Betrag aus allen offenen
+Sammlungen. Telefonnummern und E-Mail-Adressen sind anklickbar (Anrufen bzw. Mail
+schreiben). Das Suchfeld filtert beim Tippen über alle Spalten, *CSV-Export* liefert die
+ganze Liste für Excel/LibreOffice.
+
+Kontaktdaten ändern Kassenwart/in und Administrator über *Bearbeiten* (in der Tabelle oder
+auf der Seite der Schülerin/des Schülers). Alle Felder außer dem Namen sind optional; bei
+E-Mail sind mehrere Adressen mit Komma getrennt möglich.
+
+Die Klassenliste sehen alle Konten, auch *Nur lesen*. Für Konten, die nur die Kasse prüfen
+sollen, das berücksichtigen.
+
 ## Schüler/innen
 
-Die Seite einer Schülerin/eines Schülers zeigt alle Zahlungen und den Stand bei jeder
+Die Seite einer Schülerin/eines Schülers zeigt die Kontaktdaten, alle Zahlungen und den Stand bei jeder
 Sammlung. Wer die Klasse verlässt, wird auf *inaktiv* gesetzt statt gelöscht: bisherige
 Buchungen bleiben erhalten, bei Sammlungen ist nichts mehr offen. In Sammlungen, für die
 schon gezahlt wurde, bleibt sie/er mit dem Hinweis *inaktiv* stehen.
@@ -53,6 +69,7 @@ schon gezahlt wurde, bleibt sie/er mit dem Hinweis *inaktiv* stehen.
 
 - **Buchungen** → *CSV-Export*: CSV mit allen Buchungen inkl. Stornos (für die Kassenprüfung)
 - **Sammlung** → *CSV-Export*: CSV mit Soll, bezahlt und offen pro Person
+- **Klassenliste** → *CSV-Export*: alle Schüler/innen mit Kontaktdaten und Status
 
 Die Dateien sind für Excel/LibreOffice gemacht: Semikolon als Trenner, UTF-8 mit BOM,
 deutsche Beträge. Texte, die mit `=`, `+`, `-` oder `@` beginnen, werden entschärft, damit

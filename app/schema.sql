@@ -12,7 +12,17 @@ CREATE TABLE IF NOT EXISTS students (
     id          INTEGER PRIMARY KEY,
     name        TEXT NOT NULL,
     active      INTEGER NOT NULL DEFAULT 1,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    -- Klassenliste (ab 0.2.0; ältere Datenbanken ergänzt init_db() in app.py)
+    birthday    TEXT,
+    guardians   TEXT NOT NULL DEFAULT '',
+    street      TEXT NOT NULL DEFAULT '',
+    zip         TEXT NOT NULL DEFAULT '',
+    city        TEXT NOT NULL DEFAULT '',
+    phone       TEXT NOT NULL DEFAULT '',
+    phone2      TEXT NOT NULL DEFAULT '',
+    email       TEXT NOT NULL DEFAULT '',
+    notes       TEXT NOT NULL DEFAULT ''
 );
 
 -- Sammelaktion, z. B. "Ausflug Zoo, 12 € pro Kopf"

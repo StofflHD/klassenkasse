@@ -9,6 +9,21 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.2.0] – 2026-10-15
+
+### Hinzugefügt
+- **Klassenliste:** Der Reiter *Schüler* heißt jetzt *Klassenliste* und zeigt eine Tabelle mit
+  Geburtstag, Erziehungsberechtigten, Anschrift, Telefon (zwei Nummern), E-Mail und Notiz.
+  Telefon und E-Mail sind anklickbar, ein Suchfeld filtert die Tabelle.
+- Schüler/innen einzeln mit allen Kontaktdaten anlegen; das Anlegen mehrerer Namen auf
+  einmal bleibt.
+- Kontaktdaten auf der Seite der Schülerin/des Schülers anzeigen und bearbeiten
+- CSV-Export der Klassenliste
+
+### Geändert
+- Bestehende Datenbanken bekommen die neuen Spalten beim ersten Start automatisch;
+  vorhandene Daten bleiben unverändert.
+
 ## [0.1.1] – 2026-10-15
 
 ### Behoben

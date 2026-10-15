@@ -1,0 +1,12 @@
+{# Formularfelder einer Schülerin / eines Schülers; s = Datensatz oder none #}
+<label class="wide">Name <input name="name" value="{{ s.name if s }}" maxlength="100" required></label>
+<label>Geburtstag <input type="date" name="birthday" value="{{ s.birthday or '' if s }}"></label>
+<label class="wide">Erziehungsberechtigte <input name="guardians" value="{{ s.guardians if s }}" maxlength="200" placeholder="z. B. Maria und Peter Beispiel"></label>
+<label class="wide">Straße <input name="street" value="{{ s.street if s }}" maxlength="120" autocomplete="off"></label>
+<label>PLZ <input name="zip" value="{{ s.zip if s }}" maxlength="10" inputmode="numeric" autocomplete="off"></label>
+<label>Ort <input name="city" value="{{ s.city if s }}" maxlength="80" autocomplete="off"></label>
+<label>Telefon <input type="tel" name="phone" value="{{ s.phone if s }}" maxlength="40" autocomplete="off"></label>
+<label>Telefon 2 / mobil <input type="tel" name="phone2" value="{{ s.phone2 if s }}" maxlength="40" autocomplete="off"></label>
+<label class="wide">E-Mail <span class="small">(mehrere mit Komma trennen)</span>
+  <input name="email" value="{{ s.email if s }}" maxlength="120" inputmode="email" autocomplete="off"></label>
+<label class="wide">Notiz <textarea name="notes" rows="2" maxlength="500">{{ s.notes if s }}</textarea></label>

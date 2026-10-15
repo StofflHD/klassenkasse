@@ -13,7 +13,7 @@
   <nav>
     <a href="{{ url_for('bookings') }}" class="{{ 'on' if request.endpoint == 'bookings' }}">Buchungen</a>
     <a href="{{ url_for('collections') }}" class="{{ 'on' if request.endpoint in ('collections', 'collection') }}">Sammlungen</a>
-    <a href="{{ url_for('students') }}" class="{{ 'on' if request.endpoint in ('students', 'student') }}">Schüler</a>
+    <a href="{{ url_for('students') }}" class="{{ 'on' if request.endpoint in ('students', 'student') }}">Klassenliste</a>
     {% if can('admin') %}<a href="{{ url_for('users') }}" class="{{ 'on' if request.endpoint == 'users' }}">Benutzer</a>{% endif %}
   </nav>
   <div class="me">
@@ -22,7 +22,7 @@
   </div>
 </header>
 {% endif %}
-<main>
+<main class="{% block mainclass %}{% endblock %}">
   {% with msgs = get_flashed_messages(with_categories=true) %}
     {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
   {% endwith %}

@@ -1,13 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Schüler – {{ klasse }}{% endblock %}
+{% block title %}Klassenliste – {{ klasse }}{% endblock %}
+{% block mainclass %}wide{% endblock %}
 {% block content %}
-<h1>Schülerinnen und Schüler</h1>
+<div class="headrow">
+  <h1>Klassenliste</h1>
+  {% if rows %}<div><a class="btn ghost" href="{{ url_for('export_students') }}">CSV-Export</a></div>{% endif %}
+</div>
+
 {% if can('kasse') %}
 <details class="card" {{ 'open' if not rows }}>
-  <summary>Schüler/innen hinzufügen</summary>
+  <summary>Schüler/in mit Kontaktdaten hinzufügen</summary>
+  <form method="post" class="grid">
+    {{ csrf_field }}
+    {% with s = none %}{% include "_student_fields.html" %}{% endwith %}
+    <div class="actions"><button name="action" value="single">Hinzufügen</button></div>
+  </form>
+</details>
+<details class="card">
+  <summary>Mehrere Namen auf einmal hinzufügen</summary>
   <form method="post">
     {{ csrf_field }}
-    <label>Ein Name pro Zeile
+    <label>Ein Name pro Zeile – Kontaktdaten danach über „Bearbeiten“ ergänzen
       <textarea name="names" rows="6" placeholder="Anna Beispiel&#10;Ben Muster"></textarea>
     </label>
     <div class="actions"><button>Hinzufügen</button></div>
@@ -16,21 +29,45 @@
 {% endif %}
 
 {% if rows %}
+<input type="search" id="filter" class="filter" placeholder="Suchen (Name, Ort, Telefon …)" aria-label="Klassenliste durchsuchen">
 <div class="tablewrap">
-<table>
-  <thead><tr><th>Name</th><th class="num">offen (offene Sammlungen)</th><th>Status</th></tr></thead>
+<table class="classlist" id="classlist">
+  <thead><tr>
+    <th>Name</th><th>Geburtstag</th><th>Erziehungsberechtigte</th><th>Anschrift</th>
+    <th>Telefon</th><th>E-Mail</th><th class="num">offen</th>{% if can('kasse') %}<th></th>{% endif %}
+  </tr></thead>
   <tbody>
   {% for s in rows %}
   {% set o = open_map.get(s.id, 0) %}
   <tr class="{{ 'muted' if not s.active }}">
-    <td><a href="{{ url_for('student', sid=s.id) }}">{{ s.name }}</a></td>
+    <td><a href="{{ url_for('student', sid=s.id) }}">{{ s.name }}</a>{% if not s.active %} <span class="tag">inaktiv</span>{% endif %}
+      {% if s.notes %}<div class="small">{{ s.notes }}</div>{% endif %}</td>
+    <td class="nowrap">{{ s.birthday|date_de }}</td>
+    <td>{{ s.guardians }}</td>
+    <td>{{ s.street }}{% if s.street and (s.zip or s.city) %}<br>{% endif %}{{ s.zip }} {{ s.city }}</td>
+    <td class="nowrap">
+      {% for p in [s.phone, s.phone2] if p %}<a href="tel:{{ p|replace(' ', '') }}">{{ p }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}
+    </td>
+    <td>
+      {% for m in s.email.replace(';', ',').split(',') if m.strip() %}<a href="mailto:{{ m.strip() }}">{{ m.strip() }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}
+    </td>
     <td class="num {{ 'neg' if o else 'pos' }}">{{ o|euro if o else '✓' }}</td>
-    <td>{{ 'aktiv' if s.active else 'inaktiv' }}</td>
+    {% if can('kasse') %}<td><a href="{{ url_for('student', sid=s.id) }}#bearbeiten">Bearbeiten</a></td>{% endif %}
   </tr>
   {% endfor %}
   </tbody>
 </table>
 </div>
+<p class="small" id="count">{{ rows|selectattr('active')|list|length }} aktiv{% if rows|rejectattr('active')|list %}, {{ rows|rejectattr('active')|list|length }} inaktiv{% endif %} · „offen“ = Summe der offenen Sammlungen</p>
+<script>
+  // Tabelle beim Tippen filtern
+  document.getElementById('filter').addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    document.querySelectorAll('#classlist tbody tr').forEach(function (tr) {
+      tr.hidden = q !== '' && tr.textContent.toLowerCase().indexOf(q) === -1;
+    });
+  });
+</script>
 {% else %}
 <p class="empty">Noch keine Schüler/innen.</p>
 {% endif %}

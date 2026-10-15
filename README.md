@@ -13,7 +13,9 @@ einzigen Befehl installiert.
 - **Buchungen** mit Zweck, optional einer Schülerin/einem Schüler und einer Sammlung zugeordnet
 - **Sammlungen** mit Soll pro Kopf: Liste „bezahlt / offen“, Zahlung mit einem Klick erfassen
   (Teilzahlungen möglich)
-- **Pro Schüler/in:** alle Zahlungen und offene Beträge
+- **Klassenliste** als Tabelle: Geburtstag, Erziehungsberechtigte, Anschrift, Telefon,
+  E-Mail und Notiz, mit Suche und CSV-Export
+- **Pro Schüler/in:** Kontaktdaten, alle Zahlungen und offene Beträge
 - **Revisionssicher:** Buchungen können nicht gelöscht oder geändert werden – nur storniert
   (mit Grund, Zeit und Benutzer). Das erzwingt die Datenbank selbst per Trigger.
 - **Keine Rundungsfehler:** Beträge werden intern in Cent gespeichert
@@ -90,7 +92,8 @@ Containers.
 
 ## Datenschutz
 
-Die App enthält Namen von Kindern und Zahlungsdaten. Bitte nicht ohne HTTPS ins Internet
+Die App enthält Namen, Anschriften und Kontaktdaten von Kindern und Eltern sowie
+Zahlungsdaten. Alle Konten – auch *Nur lesen* – sehen die Klassenliste. Bitte nicht ohne HTTPS ins Internet
 stellen ([Reverse-Proxy](docs/reverse-proxy.md) oder VPN), starke Passwörter verwenden und
 nur so viele Konten wie nötig anlegen.
 

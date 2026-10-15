@@ -19,6 +19,7 @@ a:hover { text-decoration: underline; }
 h1 { font-size: 1.5rem; margin: .2rem 0 1rem; }
 h2 { font-size: 1.1rem; margin: 2rem 0 .7rem; display: flex; gap: 1rem; align-items: baseline; }
 main { max-width: 1000px; margin: 0 auto; padding: 1.2rem 16px 3rem; }
+main.wide { max-width: 1400px; }
 .foot { max-width: 1000px; margin: 0 auto; padding: 0 16px 1.5rem; font-size: .75rem; color: var(--muted); text-align: center; }
 
 .top { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem;
@@ -74,6 +75,13 @@ tr.cancelled td.num { text-decoration: line-through; }
 tr.muted td { opacity: .6; }
 .small { font-size: .82rem; color: var(--muted); }
 .tag { display: inline-block; font-size: .72rem; padding: 0 .45rem; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); margin-left: .3rem; font-weight: 400; }
+.nowrap { white-space: nowrap; }
+[hidden] { display: none !important; }
+input.filter { max-width: 360px; margin: 0 0 .8rem; }
+table.classlist td { font-size: .92rem; }
+dl.contact { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 0; }
+dl.contact dt { color: var(--muted); font-size: .85rem; }
+dl.contact dd { margin: 0; }
 .empty, .hint { color: var(--muted); }
 .summary { color: var(--muted); margin-top: -.5rem; }
 
