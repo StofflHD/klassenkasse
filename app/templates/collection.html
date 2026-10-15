@@ -4,7 +4,8 @@
 <div class="headrow">
   <h1>{{ s.c.title }} {% if s.c.closed %}<span class="tag">abgeschlossen</span>{% endif %}</h1>
   <div>
-    <a class="btn ghost" href="{{ url_for('export_collection', cid=s.c.id) }}">CSV-Export</a>
+    <a class="btn ghost" href="{{ url_for('export_collection', cid=s.c.id, fmt='xlsx') }}">Excel</a>
+    <a class="btn ghost" href="{{ url_for('export_collection', cid=s.c.id, fmt='csv') }}">CSV</a>
     {% if can('kasse') %}
     <form method="post" action="{{ url_for('collection_toggle', cid=s.c.id) }}" class="inline">
       {{ csrf_field }}<button class="ghost">{{ 'Wieder öffnen' if s.c.closed else 'Abschließen' }}</button>

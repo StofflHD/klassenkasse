@@ -16,14 +16,14 @@ einzigen Befehl installiert.
 - **Sammlungen** mit Soll pro Kopf: Liste „bezahlt / offen“, Zahlung mit einem Klick erfassen
   (Teilzahlungen möglich)
 - **Klassenliste** als Tabelle: Geburtstag, Anschrift, Notiz und zwei Erziehungsberechtigte
-  in eigenen Spalten (Name, Telefon, E-Mail, abweichende Anschrift), mit Suche und
-  CSV-Export
+  in eigenen Spalten (Name, Telefon, E-Mail, abweichende Anschrift), mit Suche
+- **Import der Klassenliste** aus Excel (.xlsx) oder CSV, mit Vorschau vor dem Übernehmen
 - **Pro Schüler/in:** Kontaktdaten, alle Zahlungen und offene Beträge
 - **Revisionssicher:** Buchungen können nicht gelöscht oder geändert werden – nur storniert
   (mit Grund, Zeit und Benutzer). Das erzwingt die Datenbank selbst per Trigger.
 - **Keine Rundungsfehler:** Beträge werden intern in Cent gespeichert
 - **Benutzer mit Rollen:** *Nur lesen* (Elternvertretung, Kassenprüfung), *Kassenwart*, *Administrator*
-- **CSV-Export** (Excel-tauglich, Semikolon, UTF-8)
+- **Export als Excel (.xlsx) oder CSV** für Buchungen, Sammlungen und Klassenliste
 - **Tägliche Sicherung** der Datenbank, 30 Tage aufbewahrt, und eine zusätzliche vor jedem Update
 - **Update mit einem Befehl:** `update` im Container
 - Mobiltauglich, heller und dunkler Modus

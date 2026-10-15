@@ -1,2 +1,5 @@
 Flask>=3.0,<4
 gunicorn>=22
+openpyxl>=3.1,<4
+# used by openpyxl automatically: protection against crafted XML in imported files
+defusedxml>=0.7

@@ -9,6 +9,21 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.6.0] – 2026-10-15
+
+### Hinzugefügt
+- **Export als Excel (.xlsx)** zusätzlich zu CSV – für Buchungen, Sammlungen und die
+  Klassenliste. Beträge sind echte Zahlen, Datumsangaben echte Daten, die Kopfzeile ist
+  fixiert und hat einen Filter.
+- **Import der Klassenliste** aus Excel oder CSV: erkennt die Spalten des Exports und gängige
+  Überschriften (Vorname/Nachname, Geburtsdatum, PLZ, Telefon …), zeigt vor dem Übernehmen
+  eine Vorschau (neu / ändern / gleich / Fehler) und erkennt vorhandene Schüler/innen am
+  Namen. Leere Zellen überschreiben nichts.
+
+### Geändert
+- Neue Abhängigkeiten `openpyxl` und `defusedxml`; `update` installiert sie automatisch.
+- Die Export-Adressen enden auf `.xlsx` oder `.csv` (z. B. `/export/klassenliste.xlsx`).
+
 ## [0.5.0] – 2026-10-15
 
 ### Hinzugefügt

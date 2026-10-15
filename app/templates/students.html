@@ -13,7 +13,10 @@
 {%- endmacro %}
 <div class="headrow">
   <h1>Klassenliste</h1>
-  {% if rows %}<div><a class="btn ghost" href="{{ url_for('export_students') }}">CSV-Export</a></div>{% endif %}
+  {% if rows %}<div>
+    <a class="btn ghost" href="{{ url_for('export_students', fmt='xlsx') }}">Excel</a>
+    <a class="btn ghost" href="{{ url_for('export_students', fmt='csv') }}">CSV</a>
+  </div>{% endif %}
 </div>
 
 {% if can('kasse') %}
@@ -23,6 +26,19 @@
     {{ csrf_field }}
     {% with s = none %}{% include "_student_fields.html" %}{% endwith %}
     <div class="actions"><button name="action" value="single">Hinzufügen</button></div>
+  </form>
+</details>
+<details class="card">
+  <summary>Aus Excel oder CSV importieren</summary>
+  <form method="post" action="{{ url_for('students_import') }}" enctype="multipart/form-data">
+    {{ csrf_field }}
+    <p class="small" style="margin-top:0">Erste Zeile = Überschriften. Erkannt werden die Spalten des Exports
+      (am einfachsten: exportieren, in Excel ergänzen, wieder importieren) und gängige Namen wie
+      Vorname/Nachname, Geburtsdatum, Straße, PLZ, Ort, Telefon, E-Mail. Vorhandene Schüler/innen werden am
+      Namen erkannt und aktualisiert. Vor dem Übernehmen kommt eine Vorschau.</p>
+    <label>Datei (.xlsx oder .csv, höchstens 5 MB)
+      <input type="file" name="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required></label>
+    <div class="actions"><button>Vorschau anzeigen</button></div>
   </form>
 </details>
 <details class="card">

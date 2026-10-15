@@ -4,7 +4,8 @@
 <div class="headrow">
   <h1>Buchungen</h1>
   <div>
-    <a class="btn ghost" href="{{ url_for('export_bookings') }}">CSV-Export</a>
+    <a class="btn ghost" href="{{ url_for('export_bookings', fmt='xlsx') }}">Excel</a>
+    <a class="btn ghost" href="{{ url_for('export_bookings', fmt='csv') }}">CSV</a>
     {% if show_cancelled %}
       <a class="btn ghost" href="{{ url_for('bookings') }}">Stornos ausblenden</a>
     {% else %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Import – {{ klasse }}{% endblock %}
+{% block mainclass %}wide{% endblock %}
+{% block content %}
+<div class="headrow">
+  <h1>Import prüfen</h1>
+  <a class="btn ghost" href="{{ url_for('students') }}">Abbrechen</a>
+</div>
+<p class="summary">{{ filename }}: <strong>{{ counts['neu'] }}</strong> neu,
+  <strong>{{ counts['ändern'] }}</strong> geändert, {{ counts['gleich'] }} unverändert{% if counts['fehler'] %},
+  <span class="neg"><strong>{{ counts['fehler'] }}</strong> mit Fehlern (werden übersprungen)</span>{% endif %}.</p>
+{% if ignored %}<p class="small">Nicht erkannte Spalten, werden ignoriert: {{ ignored|join(', ') }}</p>{% endif %}
+
+<form method="post" action="{{ url_for('students_import') }}" class="card">
+  {{ csrf_field }}
+  <input type="hidden" name="records" value="{{ records_json }}">
+  {% if counts['neu'] or counts['ändern'] %}
+  <p style="margin-top:0">Vorhandene Schüler/innen werden am Namen erkannt. Übernommen werden nur gefüllte
+    Zellen – leere Zellen lassen vorhandene Daten stehen.</p>
+  <button>{{ counts['neu'] + counts['ändern'] }} Einträge übernehmen</button>
+  {% else %}
+  <p style="margin:0">Nichts zu übernehmen.</p>
+  {% endif %}
+</form>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th class="num" style="width:1%">Zeile</th><th style="width:1%">Aktion</th><th style="width:1%" class="nowrap">Name</th><th>Details</th></tr></thead>
+  <tbody>
+  {% for item in plan %}
+  <tr class="{{ 'muted' if item.action == 'gleich' }}">
+    <td class="num">{{ item.line }}</td>
+    <td><span class="tag act-{{ {'neu': 'new', 'ändern': 'chg', 'gleich': 'same', 'fehler': 'err'}[item.action] }}">{{ item.action }}</span></td>
+    <td class="nowrap">{{ item.name or "–" }}</td>
+    <td>
+      {% if item.error %}<span class="neg">{{ item.error }}</span>
+      {% elif item.action == 'ändern' %}{% for c in item.changes %}{{ labels[c] }}{% if c == 'active' %}: {{ 'aktiv' if item.data.active else 'inaktiv' }}{% elif c == 'birthday' %}: {{ item.data[c]|date_de }}{% else %}: {{ item.data[c] }}{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}
+      {% elif item.action == 'neu' %}<span class="small">{% for k, v in item.data.items() if v and k not in ('name', 'active') %}{{ labels[k] }}: {{ v|date_de if k == 'birthday' else v }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,8 +1,7 @@
 """Klassenkasse – Web-App zur Verwaltung einer Klassenkasse (Flask + SQLite)."""
-import csv
-import io
 import os
 import re
+import json
 import secrets
 import sqlite3
 import sys
@@ -16,6 +15,9 @@ from flask import (Flask, Response, abort, flash, g, redirect, render_template,
 from markupsafe import Markup
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
+
+import tableio
+from tableio import euro_plain
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,6 +39,8 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("KK_COOKIE_SECURE") == "1",
     KLASSE=os.environ.get("KK_KLASSE", "Klassenkasse"),
+    MAX_CONTENT_LENGTH=5 * 1024 * 1024,     # Uploads (Import)
+    MAX_FORM_MEMORY_SIZE=5 * 1024 * 1024,   # Bestätigung eines großen Imports
 )
 if os.environ.get("KK_BEHIND_PROXY") == "1":
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -172,12 +176,6 @@ def opt_int(text):
         raise ValueError("Ungültige Auswahl.")
 
 
-def euro_plain(cents):
-    sign = "-" if cents < 0 else ""
-    e, c = divmod(abs(int(cents)), 100)
-    return f"{sign}{e:,}".replace(",", ".") + f",{c:02d}"
-
-
 def euro(cents):
     return euro_plain(cents) + " €"
 
@@ -202,21 +200,16 @@ def safe_next(target, fallback):
     return fallback
 
 
-def csv_text(value):
-    """Schutz vor CSV-/Formel-Injection in Tabellenkalkulationen."""
-    value = "" if value is None else str(value)
-    if value[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + value
-    return value
-
-
-def csv_response(filename, header, rows):
-    out = io.StringIO()
-    w = csv.writer(out, delimiter=";")
-    w.writerow(header)
-    w.writerows(rows)
-    return Response("\ufeff" + out.getvalue(), mimetype="text/csv; charset=utf-8",
-                    headers={"Content-Disposition": f"attachment; filename={filename}"})
+def export_response(fmt, basename, columns, rows, title):
+    """Tabelle als CSV oder Excel ausliefern; columns = [(Überschrift, Art), …]."""
+    if fmt == "xlsx":
+        data, mime = tableio.to_xlsx(columns, rows, title), tableio.XLSX_MIME
+    elif fmt == "csv":
+        data, mime = tableio.to_csv(columns, rows), "text/csv; charset=utf-8"
+    else:
+        abort(404)
+    return Response(data, mimetype=mime,
+                    headers={"Content-Disposition": f"attachment; filename={basename}.{fmt}"})
 
 
 # ---------------------------------------------------------------- Login, Rollen, CSRF
@@ -444,19 +437,21 @@ def cancel_booking(bid):
     return redirect(safe_next(request.form.get("back"), url_for("bookings")))
 
 
-@app.route("/export/buchungen.csv")
+@app.route("/export/buchungen.<fmt>")
 @login_required
-def export_bookings():
+def export_bookings(fmt):
     rows = get_db().execute(BOOKING_SELECT + " ORDER BY b.booking_date, b.id").fetchall()
-    return csv_response(
-        f"buchungen_{date.today().isoformat()}.csv",
-        ["Nr", "Datum", "Art", "Betrag", "Zweck", "Schüler/in", "Sammlung",
-         "Erfasst von", "Erfasst am", "Storniert am", "Storniert von", "Storno-Grund"],
-        [[r["id"], date_de(r["booking_date"]), "Einnahme" if r["kind"] == "in" else "Ausgabe",
-          euro_plain(r["amount_cents"] if r["kind"] == "in" else -r["amount_cents"]),
-          csv_text(r["purpose"]), csv_text(r["student_name"]), csv_text(r["collection_title"]),
-          csv_text(r["created_by"]), r["created_at"], r["cancelled_at"] or "",
-          csv_text(r["cancelled_by"]), csv_text(r["cancel_reason"])] for r in rows])
+    return export_response(
+        fmt, f"buchungen_{date.today().isoformat()}",
+        [("Nr", "int"), ("Datum", "date"), ("Art", "text"), ("Betrag", "euro"), ("Zweck", "text"),
+         ("Schüler/in", "text"), ("Sammlung", "text"), ("Erfasst von", "text"),
+         ("Erfasst am", "datetime"), ("Storniert am", "datetime"), ("Storniert von", "text"),
+         ("Storno-Grund", "text")],
+        [[r["id"], r["booking_date"], "Einnahme" if r["kind"] == "in" else "Ausgabe",
+          r["amount_cents"] if r["kind"] == "in" else -r["amount_cents"],
+          r["purpose"], r["student_name"], r["collection_title"], r["created_by"], r["created_at"],
+          r["cancelled_at"], r["cancelled_by"], r["cancel_reason"]] for r in rows],
+        "Buchungen")
 
 
 # ---------------------------------------------------------------- Sammlungen
@@ -523,16 +518,17 @@ def collection_toggle(cid):
     return redirect(url_for("collection", cid=cid))
 
 
-@app.route("/export/sammlung/<int:cid>.csv")
+@app.route("/export/sammlung/<int:cid>.<fmt>")
 @login_required
-def export_collection(cid):
+def export_collection(cid, fmt):
     db = get_db()
     s = collection_summary(db, get_or_404(db, "collections", cid))
-    return csv_response(
-        f"sammlung_{cid}.csv",
-        ["Schüler/in", "Soll", "Bezahlt", "Offen"],
-        [[csv_text(i["name"]), euro_plain(s["c"]["amount_cents"] if i["active"] else 0),
-          euro_plain(i["paid"]), euro_plain(i["open"])] for i in s["rows"]])
+    return export_response(
+        fmt, f"sammlung_{cid}",
+        [("Schüler/in", "text"), ("Soll", "euro"), ("Bezahlt", "euro"), ("Offen", "euro")],
+        [[i["name"], s["c"]["amount_cents"] if i["active"] else 0, i["paid"], i["open"]]
+         for i in s["rows"]],
+        s["c"]["title"])
 
 
 # ---------------------------------------------------------------- Schüler/innen
@@ -629,19 +625,212 @@ def students():
     return render_template("students.html", rows=rows, open_map=open_per_student(db))
 
 
-@app.route("/export/klassenliste.csv")
+def student_export_columns():
+    return ([("Name", "text"), ("Geburtstag", "date"), ("Straße", "text"), ("PLZ", "text"),
+             ("Ort", "text")]
+            + [(guardian_header(n, label), "text") for n in (1, 2) for _k, label, _m in GUARDIAN_FIELDS]
+            + [("Notiz", "text"), ("Status", "text")])
+
+
+def guardian_header(n, label):
+    return f"Erziehungsb. {n}: {label.split(',')[0]}"
+
+
+@app.route("/export/klassenliste.<fmt>")
 @login_required
-def export_students():
+def export_students(fmt):
     rows = get_db().execute("SELECT * FROM students ORDER BY active DESC, name COLLATE NOCASE").fetchall()
-    return csv_response(
-        f"klassenliste_{date.today().isoformat()}.csv",
-        ["Name", "Geburtstag", "Straße", "PLZ", "Ort"]
-        + [f"Erziehungsb. {n}: {label.split(',')[0]}" for n in (1, 2) for _k, label, _m in GUARDIAN_FIELDS]
-        + ["Notiz", "Status"],
-        [[csv_text(r["name"]), date_de(r["birthday"]), csv_text(r["street"]), csv_text(r["zip"]),
-          csv_text(r["city"])]
-         + [csv_text(r[c]) for c in GUARDIAN_COLUMNS]
-         + [csv_text(r["notes"]), "aktiv" if r["active"] else "inaktiv"] for r in rows])
+    return export_response(
+        fmt, f"klassenliste_{date.today().isoformat()}", student_export_columns(),
+        [[r["name"], r["birthday"], r["street"], r["zip"], r["city"]]
+         + [r[c] for c in GUARDIAN_COLUMNS]
+         + [r["notes"], "aktiv" if r["active"] else "inaktiv"] for r in rows],
+        "Klassenliste")
+
+
+# ---------------------------------------------------------------- Import der Klassenliste
+def norm_header(text):
+    text = (text or "").lower()
+    for a, b in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        text = text.replace(a, b)
+    return re.sub(r"[^a-z0-9]", "", text)
+
+
+# normalisierte Überschrift -> Feld; die Überschriften des eigenen Exports sind immer dabei
+HEADER_ALIASES = {
+    "name": "name", "schueler": "name", "schuelerin": "name", "schuelerinnen": "name", "kind": "name",
+    "vorname": "first", "nachname": "last", "familienname": "last",
+    "geburtstag": "birthday", "geburtsdatum": "birthday", "geb": "birthday", "gebdatum": "birthday",
+    "strasse": "street", "str": "street", "strassehausnummer": "street", "anschrift": "street",
+    "adresse": "street",
+    "plz": "zip", "postleitzahl": "zip",
+    "ort": "city", "wohnort": "city", "stadt": "city",
+    "notiz": "notes", "notizen": "notes", "bemerkung": "notes", "bemerkungen": "notes", "hinweis": "notes",
+    "status": "status",
+    "telefon": "g1_phone", "tel": "g1_phone", "telefonnummer": "g1_phone", "handy": "g1_phone",
+    "mobil": "g1_phone", "email": "g1_email", "mail": "g1_email",
+    "erziehungsberechtigte": "g1_name", "eltern": "g1_name",
+}
+GUARDIAN_HEADER_RE = re.compile(
+    r"^(?:erziehungsb\w*?|eltern(?:teil)?|eb)([12])"
+    r"(name|telefon|tel|mobil|handy|email|mail|anschrift|adresse)$")
+GUARDIAN_HEADER_KEYS = {"name": "name", "telefon": "phone", "tel": "phone", "mobil": "phone",
+                        "handy": "phone", "email": "email", "mail": "email",
+                        "anschrift": "address", "adresse": "address"}
+STATUS_VALUES = {"aktiv": 1, "ja": 1, "1": 1, "x": 1, "inaktiv": 0, "nein": 0, "0": 0}
+
+
+def map_headers(header):
+    """Spalten der Datei -> {Index: Feld}, dazu die Liste der unbekannten Überschriften."""
+    mapping, ignored, used = {}, [], set()
+    for i, h in enumerate(header):
+        key = norm_header(h)
+        m = GUARDIAN_HEADER_RE.match(key)
+        field = f"g{m.group(1)}_{GUARDIAN_HEADER_KEYS[m.group(2)]}" if m else HEADER_ALIASES.get(key)
+        if field and field not in used:
+            mapping[i] = field
+            used.add(field)
+        elif h:
+            ignored.append(h)
+    fields = set(mapping.values())
+    if "name" not in fields and not {"first", "last"} & fields:
+        raise ValueError("Keine Spalte „Name“ (oder „Vorname“/„Nachname“) gefunden.")
+    return mapping, ignored
+
+
+def import_records(header, body, lines):
+    """Zeilen der Datei -> Liste von {Feld: Text}, nur Felder, deren Spalte es gibt.
+
+    "line" ist die Zeilennummer in der Datei, für die Vorschau.
+    """
+    mapping, ignored = map_headers(header)
+    records = []
+    for row, line in zip(body, lines):
+        rec = {field: row[i].strip() for i, field in mapping.items()}
+        rec["line"] = str(line)
+        first, last = rec.pop("first", ""), rec.pop("last", "")
+        if not rec.get("name") and (first or last):
+            rec["name"] = f"{first} {last}".strip()
+        if any(v for k, v in rec.items() if k != "line"):
+            records.append(rec)
+    return records, ignored
+
+
+def parse_birthday(text):
+    """'2014-03-12', '12.03.2014' oder '12.3.14' -> ISO-Datum."""
+    text = (text or "").strip()
+    m = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})", text)
+    if m:
+        d, mo, y = (int(x) for x in m.groups())
+        if y < 100:
+            y += 2000 if y <= date.today().year % 100 else 1900
+        try:
+            return date(y, mo, d).isoformat()
+        except ValueError:
+            raise ValueError(f"Ungültiges Datum: {text}")
+    try:
+        return parse_date(text[:10], default_today=False)
+    except ValueError:
+        raise ValueError(f"Ungültiges Datum: {text}")
+
+
+def plan_import(db, records):
+    """Was der Import tun würde: je Zeile Aktion, Daten, Änderungen und Fehler.
+
+    Vorhandene Schüler/innen werden am Namen erkannt. Überschrieben werden nur
+    gefüllte Zellen; leere lassen vorhandene Daten stehen (Löschen geht im Formular).
+    """
+    existing = {}
+    for r in db.execute("SELECT * FROM students").fetchall():
+        existing.setdefault(r["name"].strip().lower(), r)
+    seen, plan = set(), []
+    for rec in records:
+        item = {"rec": rec, "name": rec.get("name", ""), "line": rec.get("line", ""),
+                "changes": [], "error": None}
+        try:
+            key = item["name"].strip().lower()
+            if not key:
+                raise ValueError("Name fehlt.")
+            if key in seen:
+                raise ValueError("Steht mehrfach in der Datei.")
+            seen.add(key)
+            old = existing.get(key)
+            form = {c: (old[c] or "") if old else "" for c in STUDENT_COLUMNS}
+            form.update({k: v for k, v in rec.items() if k in STUDENT_COLUMNS and v})
+            if rec.get("birthday"):
+                form["birthday"] = parse_birthday(rec["birthday"])
+            data = read_student_form(form)
+            active = old["active"] if old else 1
+            if rec.get("status"):
+                if rec["status"].lower() not in STATUS_VALUES:
+                    raise ValueError(f"Unbekannter Status: {rec['status']} (aktiv oder inaktiv)")
+                active = STATUS_VALUES[rec["status"].lower()]
+            data["active"] = active
+            item["data"] = data
+            if old is None:
+                item["action"] = "neu"
+            else:
+                item["sid"] = old["id"]
+                item["changes"] = [c for c in STUDENT_COLUMNS + ["active"]
+                                   if (old[c] or "") != (data[c] or "")]
+                item["action"] = "ändern" if item["changes"] else "gleich"
+        except ValueError as e:
+            item["action"], item["error"] = "fehler", str(e)
+        plan.append(item)
+    return plan
+
+
+FIELD_LABELS = dict(
+    [("name", "Name"), ("birthday", "Geburtstag"), ("active", "Status")]
+    + [(k, label) for k, label, _m in ADDRESS_FIELDS]
+    + [(f"g{n}_{k}", f"Erziehungsb. {n}: {label.split(',')[0]}") for n in (1, 2)
+       for k, label, _m in GUARDIAN_FIELDS])
+
+
+@app.route("/schueler/import", methods=["POST"])
+@role_required("kasse")
+def students_import():
+    db = get_db()
+    try:
+        if "records" in request.form:  # Bestätigung nach der Vorschau
+            records = json.loads(request.form["records"])
+            if not isinstance(records, list) or not all(isinstance(r, dict) for r in records):
+                raise ValueError("Ungültige Importdaten.")
+            records = [{str(k): str(v)[:600] for k, v in r.items()} for r in records]
+            plan = plan_import(db, records)
+            cols = STUDENT_COLUMNS + ["active"]
+            new = changed = 0
+            for item in plan:
+                if item["action"] == "neu":
+                    db.execute(f"INSERT INTO students ({', '.join(cols)}) "
+                               f"VALUES ({', '.join('?' * len(cols))})",
+                               [item["data"][c] for c in cols])
+                    new += 1
+                elif item["action"] == "ändern":
+                    db.execute(f"UPDATE students SET {', '.join(c + ' = ?' for c in cols)} WHERE id = ?",
+                               [item["data"][c] for c in cols] + [item["sid"]])
+                    changed += 1
+            db.commit()
+            skipped = sum(1 for i in plan if i["action"] == "fehler")
+            flash(f"Import fertig: {new} neu, {changed} geändert"
+                  + (f", {skipped} Zeilen mit Fehlern übersprungen." if skipped else "."), "ok")
+            return redirect(url_for("students"))
+
+        upload = request.files.get("file")
+        if not upload or not upload.filename:
+            raise ValueError("Bitte eine Datei wählen.")
+        header, body, lines = tableio.read_table(upload.filename, upload.read())
+        records, ignored = import_records(header, body, lines)
+        if not records:
+            raise ValueError("Die Datei enthält keine Zeilen.")
+        plan = plan_import(db, records)
+        counts = {a: sum(1 for i in plan if i["action"] == a) for a in ("neu", "ändern", "gleich", "fehler")}
+        return render_template("students_import.html", plan=plan, counts=counts, ignored=ignored,
+                               filename=upload.filename, labels=FIELD_LABELS,
+                               records_json=json.dumps(records, ensure_ascii=False))
+    except (ValueError, json.JSONDecodeError) as e:
+        flash(f"Import nicht möglich: {e}", "error")
+        return redirect(url_for("students"))
 
 
 @app.route("/schueler/<int:sid>")
@@ -733,9 +922,11 @@ def user_edit(uid):
 @app.errorhandler(400)
 @app.errorhandler(403)
 @app.errorhandler(404)
+@app.errorhandler(413)
 def error_page(e):
     texts = {400: "Ungültige Anfrage (evtl. Seite neu laden).",
-             403: "Dafür fehlen dir die Rechte.", 404: "Nicht gefunden."}
+             403: "Dafür fehlen dir die Rechte.", 404: "Nicht gefunden.",
+             413: "Die Datei ist zu groß (höchstens 5 MB)."}
     return render_template("error.html", code=e.code, text=texts.get(e.code, "Fehler")), e.code
 
 

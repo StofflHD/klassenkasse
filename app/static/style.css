@@ -89,6 +89,10 @@ table.classlist td strong { font-weight: 600; }
 dl.contact { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 0; }
 dl.contact dt { color: var(--muted); font-size: .85rem; }
 dl.contact dd { margin: 0; }
+.tag.act-new { color: var(--pos); border-color: var(--pos); }
+.tag.act-chg { color: var(--accent); border-color: var(--accent); }
+.tag.act-err { color: var(--neg); border-color: var(--neg); }
+.headrow > div .btn { padding: .4rem .8rem; }
 .empty, .hint { color: var(--muted); }
 .summary { color: var(--muted); margin-top: -.5rem; }
 

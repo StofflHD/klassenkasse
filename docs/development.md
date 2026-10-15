@@ -20,7 +20,8 @@ install.sh                 Installer für den Proxmox-Host (legt den LXC an)
 deploy/install.sh          Installation/Update im Container
 deploy/update.sh           wird zu /usr/bin/update im Container
 deploy/*.service, *.timer  systemd: App (Gunicorn) und tägliche Sicherung
-app/app.py                 Flask-App: Routen, Rechte, CLI (create-user, backup, version)
+app/app.py                 Flask-App: Routen, Rechte, Import-Logik, CLI (create-user, backup, version)
+app/tableio.py             Tabellen lesen/schreiben: CSV und Excel (openpyxl)
 app/schema.sql             Tabellen und Trigger (wird bei jedem Start angewendet)
 app/templates/, static/    Oberfläche
 VERSION                    aktuelle Version, von update.sh mit GitHub verglichen

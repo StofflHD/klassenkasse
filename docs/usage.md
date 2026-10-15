@@ -3,8 +3,8 @@
 ## Erste Schritte
 
 1. Als Administrator anmelden.
-2. **Klassenliste** → Schüler/innen eintragen: einzeln mit Kontaktdaten oder mehrere Namen
-   auf einmal (einer pro Zeile) und die Kontaktdaten danach ergänzen.
+2. **Klassenliste** → Schüler/innen eintragen: einzeln mit Kontaktdaten, mehrere Namen auf
+   einmal (einer pro Zeile) oder eine vorhandene Liste aus Excel/CSV importieren.
 3. **Benutzer** → Konten für Kassenwart/in und Elternvertretung anlegen.
 4. **Sammlungen** → erste Sammlung anlegen, z. B. „Ausflug Zoo“, 12 €, Fälligkeitsdatum.
 
@@ -53,7 +53,7 @@ Jede/r Erziehungsberechtigte hat eigene Felder: Name, Telefon, E-Mail und eine A
 falls sie von der des Kindes abweicht (z. B. bei getrennt lebenden Eltern).
 Unterschiedliche Nachnamen sind so kein Problem. Telefonnummern und E-Mail-Adressen sind anklickbar (Anrufen bzw. Mail
 schreiben). Das Suchfeld filtert beim Tippen über alle Spalten, *CSV-Export* liefert die
-ganze Liste für Excel/LibreOffice.
+ganze Liste.
 
 Kontaktdaten ändern Kassenwart/in und Administrator über *Bearbeiten* (in der Tabelle oder
 auf der Seite der Schülerin/des Schülers). Alle Felder außer dem Namen des Kindes sind
@@ -62,6 +62,34 @@ trennt sie mit `/`. Bei E-Mail sind mehrere Adressen mit Komma getrennt möglich
 
 Die Klassenliste sehen alle Konten, auch *Nur lesen*. Für Konten, die nur die Kasse prüfen
 sollen, das berücksichtigen.
+
+### Import aus Excel oder CSV
+
+*Klassenliste → Aus Excel oder CSV importieren* (Kassenwart/in und Administrator) liest eine
+`.xlsx`- oder `.csv`-Datei (höchstens 5 MB). Die erste Zeile enthält die Überschriften.
+Erkannt werden:
+
+| Feld | Überschriften (Groß-/Kleinschreibung egal) |
+|---|---|
+| Name | Name, Schüler/in, Kind – oder getrennt Vorname und Nachname |
+| Geburtstag | Geburtstag, Geburtsdatum, Geb. (`12.03.2014`, `12.3.14` oder Excel-Datum) |
+| Anschrift | Straße, PLZ, Ort (auch Postleitzahl, Wohnort) |
+| Erziehungsberechtigte/r 1 / 2 | wie im Export, z. B. „Erziehungsb. 1: Name“, „Erziehungsb. 2: Telefon“; Telefon, E-Mail ohne Nummer gehören zu 1 |
+| Notiz | Notiz, Bemerkung, Hinweis |
+| Status | aktiv / inaktiv |
+
+Andere Spalten werden ignoriert und in der Vorschau genannt. Am einfachsten: die
+Klassenliste als Excel exportieren, ergänzen und wieder importieren.
+
+Vor dem Übernehmen zeigt eine **Vorschau** jede Zeile mit ihrer Zeilennummer in der Datei:
+*neu*, *ändern* (mit den geänderten Feldern), *gleich* oder *fehler* (z. B. ungültige
+E-Mail-Adresse, ungültiges Datum, Name doppelt in der Datei). Erst *Übernehmen* speichert;
+Zeilen mit Fehlern werden übersprungen.
+
+Vorhandene Schüler/innen werden **am Namen** erkannt (Groß-/Kleinschreibung egal) und
+aktualisiert. Dabei überschreiben nur **gefüllte Zellen** – leere Zellen lassen vorhandene
+Daten stehen. Einen Wert löschen geht über *Bearbeiten*. Wer umbenannt wurde, kommt beim
+Import als neuer Eintrag dazu.
 
 ## Schüler/innen
 
@@ -72,10 +100,13 @@ schon gezahlt wurde, bleibt sie/er mit dem Hinweis *inaktiv* stehen.
 
 ## Export
 
-- **Buchungen** → *CSV-Export*: CSV mit allen Buchungen inkl. Stornos (für die Kassenprüfung)
-- **Sammlung** → *CSV-Export*: CSV mit Soll, bezahlt und offen pro Person
-- **Klassenliste** → *CSV-Export*: alle Schüler/innen mit Kontaktdaten und Status
+Jede Liste gibt es als **Excel** (.xlsx) und als **CSV**:
 
-Die Dateien sind für Excel/LibreOffice gemacht: Semikolon als Trenner, UTF-8 mit BOM,
-deutsche Beträge. Texte, die mit `=`, `+`, `-` oder `@` beginnen, werden entschärft, damit
-sie in der Tabellenkalkulation nicht als Formel laufen.
+- **Buchungen**: alle Buchungen inkl. Stornos (für die Kassenprüfung)
+- **Sammlung**: Soll, bezahlt und offen pro Person
+- **Klassenliste**: alle Schüler/innen mit Kontaktdaten und Status
+
+In der Excel-Datei sind Beträge echte Zahlen (zum Summieren) und Datumsangaben echte Daten;
+die Kopfzeile ist fixiert und hat einen Filter. Die CSV-Datei hat Semikolon als Trenner,
+UTF-8 mit BOM und deutsche Beträge. In beiden laufen Texte, die mit `=`, `+`, `-` oder `@`
+beginnen, nie als Formel.
