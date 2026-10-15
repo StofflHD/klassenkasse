@@ -79,6 +79,12 @@ tr.muted td { opacity: .6; }
 [hidden] { display: none !important; }
 input.filter { max-width: 360px; margin: 0 0 .8rem; }
 table.classlist td { font-size: .92rem; }
+fieldset.guardian { border: 1px solid var(--line); border-radius: var(--radius); padding: .6rem .8rem 0; margin: 0 0 .8rem; min-width: 0; }
+fieldset.guardian legend { font-size: .85rem; font-weight: 600; padding: 0 .3rem; }
+.contactcards { margin-bottom: 1rem; }
+.contactcards .card { margin: 0; }
+.contactcards strong { display: block; margin: .1rem 0 .5rem; }
+table.classlist td strong { font-weight: 600; }
 dl.contact { display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1rem; margin: 0; }
 dl.contact dt { color: var(--muted); font-size: .85rem; }
 dl.contact dd { margin: 0; }

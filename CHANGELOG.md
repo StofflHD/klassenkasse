@@ -9,6 +9,23 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.3.0] – 2026-10-15
+
+### Geändert
+- **Erziehungsberechtigte in eigenen Spalten:** Statt einer gemeinsamen Spalte gibt es jetzt
+  Erziehungsberechtigte/r 1 und 2, jeweils mit Name, Telefon, Mobil, E-Mail und einer
+  Anschrift, falls sie von der des Kindes abweicht. Telefon und E-Mail gehören jetzt zur
+  jeweiligen Person, nicht mehr zum Kind.
+- Die Seite einer Schülerin/eines Schülers zeigt die Kontaktdaten als Karten: Kind,
+  Erziehungsberechtigte/r 1 und 2.
+- CSV-Export der Klassenliste mit eigenen Spalten je Erziehungsberechtigte/m.
+
+### Übernahme bestehender Daten
+- Einträge aus 0.2.0 werden beim ersten Start automatisch zu Erziehungsberechtigte/r 1
+  verschoben: *Erziehungsberechtigte* → Name, *Telefon* → Telefon, *Telefon 2 / mobil* →
+  Mobil, *E-Mail* → E-Mail. Stehen dort zwei Personen (z. B. „Maria und Peter Beispiel“),
+  bitte die zweite über *Bearbeiten* nach Erziehungsberechtigte/r 2 verschieben.
+
 ## [0.2.0] – 2026-10-15
 
 ### Hinzugefügt

@@ -2,6 +2,15 @@
 {% block title %}Klassenliste – {{ klasse }}{% endblock %}
 {% block mainclass %}wide{% endblock %}
 {% block content %}
+{% macro guardian_cell(s, n) -%}
+  {%- set p = 'g%d_' % n -%}
+  {%- if s[p ~ 'name'] %}<strong>{{ s[p ~ 'name'] }}</strong>{% endif -%}
+  {%- for key, icon in (('phone', 'Tel.'), ('mobile', 'Mobil')) if s[p ~ key] %}
+    <div class="nowrap"><span class="small">{{ icon }}</span> <a href="tel:{{ s[p ~ key]|replace(' ', '') }}">{{ s[p ~ key] }}</a></div>
+  {%- endfor -%}
+  {%- for m in s[p ~ 'email'].split(',') if m.strip() %}<div><a href="mailto:{{ m.strip() }}">{{ m.strip() }}</a></div>{% endfor -%}
+  {%- if s[p ~ 'address'] %}<div class="small">{{ s[p ~ 'address'] }}</div>{% endif -%}
+{%- endmacro %}
 <div class="headrow">
   <h1>Klassenliste</h1>
   {% if rows %}<div><a class="btn ghost" href="{{ url_for('export_students') }}">CSV-Export</a></div>{% endif %}
@@ -33,8 +42,9 @@
 <div class="tablewrap">
 <table class="classlist" id="classlist">
   <thead><tr>
-    <th>Name</th><th>Geburtstag</th><th>Erziehungsberechtigte</th><th>Anschrift</th>
-    <th>Telefon</th><th>E-Mail</th><th class="num">offen</th>{% if can('kasse') %}<th></th>{% endif %}
+    <th>Name</th><th>Geburtstag</th><th>Anschrift</th>
+    <th>Erziehungsberechtigte/r 1</th><th>Erziehungsberechtigte/r 2</th>
+    <th class="num">offen</th>{% if can('kasse') %}<th></th>{% endif %}
   </tr></thead>
   <tbody>
   {% for s in rows %}
@@ -43,14 +53,8 @@
     <td><a href="{{ url_for('student', sid=s.id) }}">{{ s.name }}</a>{% if not s.active %} <span class="tag">inaktiv</span>{% endif %}
       {% if s.notes %}<div class="small">{{ s.notes }}</div>{% endif %}</td>
     <td class="nowrap">{{ s.birthday|date_de }}</td>
-    <td>{{ s.guardians }}</td>
     <td>{{ s.street }}{% if s.street and (s.zip or s.city) %}<br>{% endif %}{{ s.zip }} {{ s.city }}</td>
-    <td class="nowrap">
-      {% for p in [s.phone, s.phone2] if p %}<a href="tel:{{ p|replace(' ', '') }}">{{ p }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}
-    </td>
-    <td>
-      {% for m in s.email.replace(';', ',').split(',') if m.strip() %}<a href="mailto:{{ m.strip() }}">{{ m.strip() }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}
-    </td>
+    {% for n in (1, 2) %}<td>{{ guardian_cell(s, n) }}</td>{% endfor %}
     <td class="num {{ 'neg' if o else 'pos' }}">{{ o|euro if o else '✓' }}</td>
     {% if can('kasse') %}<td><a href="{{ url_for('student', sid=s.id) }}#bearbeiten">Bearbeiten</a></td>{% endif %}
   </tr>

@@ -13,8 +13,9 @@ einzigen Befehl installiert.
 - **Buchungen** mit Zweck, optional einer Schülerin/einem Schüler und einer Sammlung zugeordnet
 - **Sammlungen** mit Soll pro Kopf: Liste „bezahlt / offen“, Zahlung mit einem Klick erfassen
   (Teilzahlungen möglich)
-- **Klassenliste** als Tabelle: Geburtstag, Erziehungsberechtigte, Anschrift, Telefon,
-  E-Mail und Notiz, mit Suche und CSV-Export
+- **Klassenliste** als Tabelle: Geburtstag, Anschrift, Notiz und zwei Erziehungsberechtigte
+  in eigenen Spalten (Name, Telefon, Mobil, E-Mail, abweichende Anschrift), mit Suche und
+  CSV-Export
 - **Pro Schüler/in:** Kontaktdaten, alle Zahlungen und offene Beträge
 - **Revisionssicher:** Buchungen können nicht gelöscht oder geändert werden – nur storniert
   (mit Grund, Zeit und Benutzer). Das erzwingt die Datenbank selbst per Trigger.

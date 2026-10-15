@@ -78,32 +78,47 @@ def init_db():
     db.close()
 
 
-# Spalten, die nach der ersten Version dazugekommen sind: (Tabelle, Spalte, Definition)
-MIGRATIONS = [
-    ("students", "birthday", "TEXT"),
-    ("students", "guardians", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "street", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "zip", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "city", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "phone", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "phone2", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "email", "TEXT NOT NULL DEFAULT ''"),
-    ("students", "notes", "TEXT NOT NULL DEFAULT ''"),
+# Erziehungsberechtigte: je zwei Personen mit eigenen Daten, Spalten g1_*, g2_*
+GUARDIAN_FIELDS = [
+    ("name", "Name", 100),
+    ("phone", "Telefon", 40),
+    ("mobile", "Mobil", 40),
+    ("email", "E-Mail", 120),
+    ("address", "Anschrift, falls abweichend", 200),
 ]
+GUARDIAN_COLUMNS = [f"g{n}_{k}" for n in (1, 2) for k, _l, _m in GUARDIAN_FIELDS]
+
+
+def columns(db, table):
+    return {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
 
 
 def migrate(db):
-    for table, column, definition in MIGRATIONS:
-        existing = {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
-        if column in existing:
-            continue
-        try:
-            db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
-            db.commit()
-        except sqlite3.OperationalError as e:
-            # mehrere Gunicorn-Worker starten gleichzeitig – einer war schneller
-            if "duplicate column" not in str(e):
-                raise
+    """Ältere Datenbanken auf den Stand von schema.sql bringen.
+
+    Läuft in einer Schreibtransaktion: starten Dienst und klassenkasse-admin
+    gleichzeitig, wartet der zweite und findet alles schon erledigt.
+    """
+    db.isolation_level = None
+    db.execute("BEGIN IMMEDIATE")
+    try:
+        cols = columns(db, "students")
+        if "g1_name" not in cols:
+            # 0.1.x: noch keine Kontaktfelder; 0.2.0: eine Spalte für alle Eltern
+            for col in ("birthday", "street", "zip", "city", "notes",
+                        "guardians", "phone", "phone2", "email"):
+                if col not in cols:
+                    db.execute(f"ALTER TABLE students ADD COLUMN {col} "
+                               + ("TEXT" if col == "birthday" else "TEXT NOT NULL DEFAULT ''"))
+            for col in GUARDIAN_COLUMNS:
+                db.execute(f"ALTER TABLE students ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
+            # Daten aus 0.2.0 verlustfrei nach Erziehungsberechtigte/r 1 übernehmen
+            db.execute("""UPDATE students SET g1_name = guardians, g1_phone = phone,
+                                              g1_mobile = phone2, g1_email = email""")
+        db.execute("COMMIT")
+    except Exception:
+        db.execute("ROLLBACK")
+        raise
 
 
 init_db()
@@ -518,35 +533,51 @@ def open_per_student(db):
     return result
 
 
-# Kontaktfelder der Klassenliste: (Spalte, Bezeichnung, max. Länge)
-CONTACT_FIELDS = [
-    ("guardians", "Erziehungsberechtigte", 200),
+# Felder der Klassenliste außer Name und Geburtstag: (Spalte, Bezeichnung, max. Länge)
+ADDRESS_FIELDS = [
     ("street", "Straße", 120),
     ("zip", "PLZ", 10),
     ("city", "Ort", 80),
-    ("phone", "Telefon", 40),
-    ("phone2", "Telefon 2 / mobil", 40),
-    ("email", "E-Mail", 120),
     ("notes", "Notiz", 500),
 ]
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def email_list(text):
+    return [a.strip() for a in (text or "").replace(";", ",").split(",") if a.strip()]
 
 
 def read_student_form(f):
     data = {"name": (f.get("name") or "").strip()[:100]}
     if not data["name"]:
         raise ValueError("Bitte einen Namen angeben.")
-    for key, _label, maxlen in CONTACT_FIELDS:
+    for key, _label, maxlen in ADDRESS_FIELDS:
         data[key] = (f.get(key) or "").strip()[:maxlen]
-    data["email"] = data["email"].replace(" ", "")
-    for addr in filter(None, (a.strip() for a in data["email"].replace(";", ",").split(","))):
-        if not EMAIL_RE.match(addr):
-            raise ValueError(f"Ungültige E-Mail-Adresse: {addr}")
+    for n in (1, 2):
+        for key, _label, maxlen in GUARDIAN_FIELDS:
+            data[f"g{n}_{key}"] = (f.get(f"g{n}_{key}") or "").strip()[:maxlen]
+        emails = email_list(data[f"g{n}_email"])
+        for addr in emails:
+            if not EMAIL_RE.match(addr):
+                raise ValueError(f"Ungültige E-Mail-Adresse: {addr}")
+        data[f"g{n}_email"] = ", ".join(emails)
     data["birthday"] = parse_date(f.get("birthday"), default_today=False)
     return data
 
 
-STUDENT_COLUMNS = ["name", "birthday"] + [k for k, _l, _m in CONTACT_FIELDS]
+def guardians(st):
+    """Die eingetragenen Erziehungsberechtigten einer Schülerin/eines Schülers."""
+    result = []
+    for n in (1, 2):
+        g = {k: st[f"g{n}_{k}"] for k, _l, _m in GUARDIAN_FIELDS}
+        if any(g.values()):
+            g["n"], g["emails"] = n, email_list(g["email"])
+            result.append(g)
+    return result
+
+
+app.jinja_env.globals["guardians"] = guardians
+STUDENT_COLUMNS = ["name", "birthday"] + [k for k, _l, _m in ADDRESS_FIELDS] + GUARDIAN_COLUMNS
 
 
 @app.route("/schueler", methods=["GET", "POST"])
@@ -575,8 +606,7 @@ def students():
               "ok" if names else "error")
         return redirect(url_for("students"))
     rows = db.execute("SELECT * FROM students ORDER BY active DESC, name COLLATE NOCASE").fetchall()
-    return render_template("students.html", rows=rows, open_map=open_per_student(db),
-                           fields=CONTACT_FIELDS)
+    return render_template("students.html", rows=rows, open_map=open_per_student(db))
 
 
 @app.route("/export/klassenliste.csv")
@@ -585,10 +615,13 @@ def export_students():
     rows = get_db().execute("SELECT * FROM students ORDER BY active DESC, name COLLATE NOCASE").fetchall()
     return csv_response(
         f"klassenliste_{date.today().isoformat()}.csv",
-        ["Name", "Geburtstag"] + [label for _k, label, _m in CONTACT_FIELDS] + ["Status"],
-        [[csv_text(r["name"]), date_de(r["birthday"])]
-         + [csv_text(r[k]) for k, _l, _m in CONTACT_FIELDS]
-         + ["aktiv" if r["active"] else "inaktiv"] for r in rows])
+        ["Name", "Geburtstag", "Straße", "PLZ", "Ort"]
+        + [f"Erziehungsb. {n}: {label.split(',')[0]}" for n in (1, 2) for _k, label, _m in GUARDIAN_FIELDS]
+        + ["Notiz", "Status"],
+        [[csv_text(r["name"]), date_de(r["birthday"]), csv_text(r["street"]), csv_text(r["zip"]),
+          csv_text(r["city"])]
+         + [csv_text(r[c]) for c in GUARDIAN_COLUMNS]
+         + [csv_text(r["notes"]), "aktiv" if r["active"] else "inaktiv"] for r in rows])
 
 
 @app.route("/schueler/<int:sid>")
@@ -603,7 +636,7 @@ def student(sid):
                 status.append({"c": col, **i})
     rows = db.execute(BOOKING_SELECT + " WHERE b.student_id = ? ORDER BY b.booking_date DESC, b.id DESC",
                       (sid,)).fetchall()
-    return render_template("student.html", st=st, status=status, rows=rows, fields=CONTACT_FIELDS)
+    return render_template("student.html", st=st, status=status, rows=rows)
 
 
 @app.route("/schueler/<int:sid>/bearbeiten", methods=["POST"])

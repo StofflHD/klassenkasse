@@ -46,14 +46,18 @@ an und zählen nicht mehr bei den offenen Beträgen; sie lassen sich wieder öff
 ## Klassenliste
 
 Die Klassenliste zeigt alle Schüler/innen als Tabelle: Name (mit Notiz), Geburtstag,
-Erziehungsberechtigte, Anschrift, Telefon, E-Mail und den offenen Betrag aus allen offenen
-Sammlungen. Telefonnummern und E-Mail-Adressen sind anklickbar (Anrufen bzw. Mail
+Anschrift, je eine Spalte für Erziehungsberechtigte/r 1 und 2 und den offenen Betrag aus
+allen offenen Sammlungen.
+
+Jede/r Erziehungsberechtigte hat eigene Felder: Name, Telefon, Mobil, E-Mail und eine
+Anschrift, falls sie von der des Kindes abweicht (z. B. bei getrennt lebenden Eltern).
+Unterschiedliche Nachnamen sind so kein Problem. Telefonnummern und E-Mail-Adressen sind anklickbar (Anrufen bzw. Mail
 schreiben). Das Suchfeld filtert beim Tippen über alle Spalten, *CSV-Export* liefert die
 ganze Liste für Excel/LibreOffice.
 
 Kontaktdaten ändern Kassenwart/in und Administrator über *Bearbeiten* (in der Tabelle oder
-auf der Seite der Schülerin/des Schülers). Alle Felder außer dem Namen sind optional; bei
-E-Mail sind mehrere Adressen mit Komma getrennt möglich.
+auf der Seite der Schülerin/des Schülers). Alle Felder außer dem Namen des Kindes sind
+optional; bei E-Mail sind mehrere Adressen mit Komma getrennt möglich.
 
 Die Klassenliste sehen alle Konten, auch *Nur lesen*. Für Konten, die nur die Kasse prüfen
 sollen, das berücksichtigen.

@@ -6,20 +6,27 @@
   <a class="btn ghost" href="{{ url_for('students') }}">Zurück</a>
 </div>
 
-{% set has_contact = st.birthday or st.guardians or st.street or st.zip or st.city or st.phone or st.phone2 or st.email or st.notes %}
-<div class="card">
-  {% if has_contact %}
-  <dl class="contact">
-    {% if st.birthday %}<dt>Geburtstag</dt><dd>{{ st.birthday|date_de }}</dd>{% endif %}
-    {% if st.guardians %}<dt>Erziehungsberechtigte</dt><dd>{{ st.guardians }}</dd>{% endif %}
-    {% if st.street or st.zip or st.city %}<dt>Anschrift</dt><dd>{{ st.street }}{% if st.street and (st.zip or st.city) %}, {% endif %}{{ st.zip }} {{ st.city }}</dd>{% endif %}
-    {% for key, label, _m in fields if key in ('phone', 'phone2') and st[key] %}<dt>{{ label }}</dt><dd><a href="tel:{{ st[key]|replace(' ', '') }}">{{ st[key] }}</a></dd>{% endfor %}
-    {% if st.email %}<dt>E-Mail</dt><dd>{% for m in st.email.replace(';', ',').split(',') if m.strip() %}<a href="mailto:{{ m.strip() }}">{{ m.strip() }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</dd>{% endif %}
-    {% if st.notes %}<dt>Notiz</dt><dd>{{ st.notes }}</dd>{% endif %}
-  </dl>
-  {% else %}
-  <p class="empty" style="margin:0">Noch keine Kontaktdaten.</p>
-  {% endif %}
+{% set gs = guardians(st) %}
+<div class="cards contactcards">
+  <div class="card">
+    <dl class="contact">
+      <dt>Geburtstag</dt><dd>{{ st.birthday|date_de or '–' }}</dd>
+      <dt>Anschrift</dt><dd>{% if st.street or st.zip or st.city %}{{ st.street }}{% if st.street and (st.zip or st.city) %}, {% endif %}{{ st.zip }} {{ st.city }}{% else %}–{% endif %}</dd>
+      {% if st.notes %}<dt>Notiz</dt><dd>{{ st.notes }}</dd>{% endif %}
+    </dl>
+  </div>
+  {% for g in gs %}
+  <div class="card">
+    <div class="small">Erziehungsberechtigte/r {{ g.n }}</div>
+    <strong>{{ g.name or '–' }}</strong>
+    <dl class="contact">
+      {% if g.phone %}<dt>Telefon</dt><dd><a href="tel:{{ g.phone|replace(' ', '') }}">{{ g.phone }}</a></dd>{% endif %}
+      {% if g.mobile %}<dt>Mobil</dt><dd><a href="tel:{{ g.mobile|replace(' ', '') }}">{{ g.mobile }}</a></dd>{% endif %}
+      {% if g.emails %}<dt>E-Mail</dt><dd>{% for m in g.emails %}<a href="mailto:{{ m }}">{{ m }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}</dd>{% endif %}
+      {% if g.address %}<dt>Anschrift</dt><dd>{{ g.address }}</dd>{% endif %}
+    </dl>
+  </div>
+  {% endfor %}
 </div>
 
 {% if can('kasse') %}

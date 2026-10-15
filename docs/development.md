@@ -34,8 +34,9 @@ Systembenutzer `klassenkasse` mit systemd-Härtung (`ProtectSystem=strict`, nur
 ## Datenmodell
 
 ```
-students     (id, name, active, birthday, guardians, street, zip, city,
-              phone, phone2, email, notes)
+students     (id, name, active, birthday, street, zip, city, notes,
+              g1_name, g1_phone, g1_mobile, g1_email, g1_address,
+              g2_name, g2_phone, g2_mobile, g2_email, g2_address)
 collections  (id, title, amount_cents, due_date, closed)
 bookings     (id, booking_date, kind in/out, amount_cents, purpose,
               student_id?, collection_id?, created_by, created_at,
@@ -47,8 +48,11 @@ Der Kassenstand wird nie gespeichert, sondern immer aus den nicht stornierten Bu
 berechnet. Trigger verhindern Löschen und Ändern von Buchungen sowie das Aufheben eines
 Stornos.
 
-`schema.sql` nutzt nur `CREATE … IF NOT EXISTS`. Neue Spalten kommen zusätzlich in die Liste
-`MIGRATIONS` in `app.py`; `init_db()` ergänzt sie beim Start in bestehenden Datenbanken.
+`schema.sql` beschreibt den aktuellen Stand und nutzt nur `CREATE … IF NOT EXISTS`. Bestehende
+Datenbanken bringt `migrate()` in `app.py` beim Start auf diesen Stand – in einer
+Schreibtransaktion (`BEGIN IMMEDIATE`), damit Dienst und `klassenkasse-admin` sich nicht in
+die Quere kommen. Neue Spalten also in beiden Stellen ergänzen. In Datenbanken aus 0.2.0
+bleiben die nicht mehr genutzten Spalten `guardians`, `phone`, `phone2`, `email` stehen.
 
 ## Release
 
