@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Schüler – {{ klasse }}{% endblock %}
+{% block content %}
+<h1>Schülerinnen und Schüler</h1>
+{% if can('kasse') %}
+<details class="card" {{ 'open' if not rows }}>
+  <summary>Schüler/innen hinzufügen</summary>
+  <form method="post">
+    {{ csrf_field }}
+    <label>Ein Name pro Zeile
+      <textarea name="names" rows="6" placeholder="Anna Beispiel&#10;Ben Muster"></textarea>
+    </label>
+    <div class="actions"><button>Hinzufügen</button></div>
+  </form>
+</details>
+{% endif %}
+
+{% if rows %}
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Name</th><th class="num">offen (offene Sammlungen)</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for s in rows %}
+  {% set o = open_map.get(s.id, 0) %}
+  <tr class="{{ 'muted' if not s.active }}">
+    <td><a href="{{ url_for('student', sid=s.id) }}">{{ s.name }}</a></td>
+    <td class="num {{ 'neg' if o else 'pos' }}">{{ o|euro if o else '✓' }}</td>
+    <td>{{ 'aktiv' if s.active else 'inaktiv' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Noch keine Schüler/innen.</p>
+{% endif %}
+{% endblock %}

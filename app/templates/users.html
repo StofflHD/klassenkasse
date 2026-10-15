@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Benutzer – {{ klasse }}{% endblock %}
+{% block content %}
+<h1>Benutzer</h1>
+<details class="card">
+  <summary>Neuer Benutzer</summary>
+  <form method="post" class="grid">
+    {{ csrf_field }}
+    <label>Benutzername <input name="username" maxlength="50" required autocomplete="off"></label>
+    <label>Passwort (min. 8 Zeichen) <input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+    <label>Rolle
+      <select name="role">{% for k, v in ROLE_LABELS.items() %}<option value="{{ k }}" {{ 'selected' if k == 'lesen' }}>{{ v }}</option>{% endfor %}</select>
+    </label>
+    <div class="actions"><button>Anlegen</button></div>
+  </form>
+</details>
+
+<p class="hint">Nur lesen: sieht alles (z. B. Elternvertretung, Kassenprüfung) · Kassenwart: bucht und verwaltet Sammlungen · Administrator: zusätzlich Benutzerverwaltung</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Benutzer</th><th>Rolle</th><th>Passwort neu setzen</th><th></th></tr></thead>
+  <tbody>
+  {% for u in rows %}
+  <tr>
+    <td>{{ u.username }}{% if u.id == user.id %} <span class="tag">du</span>{% endif %}</td>
+    <td>
+      {% if u.id == user.id %}{{ ROLE_LABELS[u.role] }}{% else %}
+      <form method="post" action="{{ url_for('user_edit', uid=u.id) }}" class="pay">
+        {{ csrf_field }}<input type="hidden" name="action" value="role">
+        <select name="role">{% for k, v in ROLE_LABELS.items() %}<option value="{{ k }}" {{ 'selected' if k == u.role }}>{{ v }}</option>{% endfor %}</select>
+        <button class="ghost">ändern</button>
+      </form>
+      {% endif %}
+    </td>
+    <td>
+      <form method="post" action="{{ url_for('user_edit', uid=u.id) }}" class="pay">
+        {{ csrf_field }}<input type="hidden" name="action" value="password">
+        <input name="password" type="password" minlength="8" placeholder="neues Passwort" autocomplete="new-password" required>
+        <button class="ghost">setzen</button>
+      </form>
+    </td>
+    <td>
+      {% if u.id != user.id %}
+      <form method="post" action="{{ url_for('user_edit', uid=u.id) }}" onsubmit="return confirm('Diesen Benutzer wirklich löschen?')">
+        {{ csrf_field }}<input type="hidden" name="action" value="delete">
+        <button class="danger">löschen</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% if can('kasse') %}
+<details class="card" {{ 'open' if open_form }}>
+  <summary>Neue Buchung</summary>
+  <form method="post" action="{{ url_for('bookings') }}" class="grid">
+    {{ csrf_field }}
+    <input type="hidden" name="back" value="{{ request.path }}">
+    <label>Art
+      <select name="kind">
+        <option value="in">Einnahme</option>
+        <option value="out">Ausgabe</option>
+      </select>
+    </label>
+    <label>Betrag (€) <input name="amount" inputmode="decimal" placeholder="12,50" required></label>
+    <label>Datum <input name="date" type="date" value="{{ today }}"></label>
+    <label class="wide">Zweck <input name="purpose" maxlength="200" placeholder="z. B. Eintritt Museum"></label>
+    <label>Schüler/in (optional)
+      <select name="student_id">
+        <option value="">–</option>
+        {% for s in all_students %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Sammlung (optional)
+      <select name="collection_id">
+        <option value="">–</option>
+        {% for c in open_collections %}<option value="{{ c.id }}">{{ c.title }} ({{ c.amount_cents|euro }})</option>{% endfor %}
+      </select>
+    </label>
+    <div class="actions"><button>Buchen</button></div>
+  </form>
+</details>
+{% endif %}

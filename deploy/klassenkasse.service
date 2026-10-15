@@ -1,0 +1,24 @@
+[Unit]
+Description=Klassenkasse (Gunicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=klassenkasse
+Group=klassenkasse
+WorkingDirectory=/opt/klassenkasse/app
+EnvironmentFile=/etc/klassenkasse.env
+ExecStart=/opt/klassenkasse/venv/bin/gunicorn --workers 2 --bind ${KK_BIND} --access-logfile - app:app
+Restart=on-failure
+RestartSec=3
+
+# Härtung
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/klassenkasse
+
+[Install]
+WantedBy=multi-user.target

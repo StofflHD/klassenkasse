@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Buchungen – {{ klasse }}{% endblock %}
+{% block content %}
+<div class="headrow">
+  <h1>Buchungen</h1>
+  <div>
+    <a class="btn ghost" href="{{ url_for('export_bookings') }}">CSV-Export</a>
+    {% if show_cancelled %}
+      <a class="btn ghost" href="{{ url_for('bookings') }}">Stornos ausblenden</a>
+    {% else %}
+      <a class="btn ghost" href="{{ url_for('bookings', storniert=1) }}">Stornos anzeigen</a>
+    {% endif %}
+  </div>
+</div>
+<p class="summary">Stand <strong>{{ stand|euro }}</strong> · Einnahmen {{ ein|euro }} · Ausgaben {{ aus|euro }}</p>
+{% set open_form = true %}
+{% include "_booking_form.html" %}
+{% include "_booking_table.html" %}
+{% endblock %}

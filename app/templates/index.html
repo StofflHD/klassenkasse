@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="stats">
+  <div class="stat main"><span>Kassenstand</span><strong class="{{ 'neg' if stand < 0 }}">{{ stand|euro }}</strong></div>
+  <div class="stat"><span>Einnahmen</span><strong>{{ ein|euro }}</strong></div>
+  <div class="stat"><span>Ausgaben</span><strong>{{ aus|euro }}</strong></div>
+</section>
+
+{% set open_form = false %}
+{% include "_booking_form.html" %}
+
+<h2>Offene Sammlungen</h2>
+{% if summaries %}
+<div class="cards">
+  {% for s in summaries %}
+  <a class="card col" href="{{ url_for('collection', cid=s.c.id) }}">
+    <div class="row"><strong>{{ s.c.title }}</strong><span>{{ s.c.amount_cents|euro }} p. P.</span></div>
+    {% set done = s.total - s.open_count %}
+    <div class="bar"><div style="width: {{ (100 * done / s.total) if s.total else 0 }}%"></div></div>
+    <div class="row small">
+      <span>{{ done }} von {{ s.total }} bezahlt</span>
+      {% if s.open_count %}<span class="neg">offen: {{ s.open_sum|euro }}</span>{% else %}<span class="pos">vollständig</span>{% endif %}
+    </div>
+    {% if s.c.due_date %}<div class="small">fällig {{ s.c.due_date|date_de }}</div>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">Keine offenen Sammlungen.</p>
+{% endif %}
+
+<h2>Letzte Buchungen <a class="small" href="{{ url_for('bookings') }}">alle anzeigen</a></h2>
+{% set rows = recent %}
+{% include "_booking_table.html" %}
+{% endblock %}

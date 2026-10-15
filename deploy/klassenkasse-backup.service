@@ -1,0 +1,10 @@
+[Unit]
+Description=Klassenkasse – tägliche Datenbanksicherung
+
+[Service]
+Type=oneshot
+User=klassenkasse
+Group=klassenkasse
+WorkingDirectory=/opt/klassenkasse/app
+EnvironmentFile=/etc/klassenkasse.env
+ExecStart=/bin/sh -c '/opt/klassenkasse/venv/bin/flask --app app backup /var/lib/klassenkasse/backup/klassenkasse_$(date +%%F).db && find /var/lib/klassenkasse/backup -name "klassenkasse_*.db" -mtime +30 -delete'

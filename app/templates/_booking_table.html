@@ -1,0 +1,35 @@
+{% if rows %}
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Datum</th><th>Zweck</th><th>Schüler/in</th><th class="num">Betrag</th><th></th></tr></thead>
+  <tbody>
+  {% for b in rows %}
+    <tr class="{{ 'cancelled' if b.cancelled_at }}">
+      <td>{{ b.booking_date|date_de }}</td>
+      <td>{{ b.purpose }}
+        {% if b.collection_title and b.collection_title != b.purpose %}<span class="tag">{{ b.collection_title }}</span>{% endif %}
+        {% if b.cancelled_at %}<div class="small">Storniert {{ b.cancelled_at }} von {{ b.cancelled_by }}: {{ b.cancel_reason }}</div>{% endif %}
+      </td>
+      <td>{% if b.student_id %}<a href="{{ url_for('student', sid=b.student_id) }}">{{ b.student_name }}</a>{% endif %}</td>
+      <td class="num {{ 'pos' if b.kind == 'in' else 'neg' }}">{{ (b.amount_cents if b.kind == 'in' else -b.amount_cents)|euro }}</td>
+      <td class="small">
+        {% if can('kasse') and not b.cancelled_at %}
+        <details class="storno">
+          <summary>Storno</summary>
+          <form method="post" action="{{ url_for('cancel_booking', bid=b.id) }}">
+            {{ csrf_field }}
+            <input type="hidden" name="back" value="{{ request.full_path }}">
+            <input name="reason" placeholder="Grund" required maxlength="200">
+            <button class="danger">Stornieren</button>
+          </form>
+        </details>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Noch keine Buchungen.</p>
+{% endif %}

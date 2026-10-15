@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ st.name }} – {{ klasse }}{% endblock %}
+{% block content %}
+<div class="headrow">
+  <h1>{{ st.name }} {% if not st.active %}<span class="tag">inaktiv</span>{% endif %}</h1>
+  <a class="btn ghost" href="{{ url_for('students') }}">Zurück</a>
+</div>
+
+{% if can('kasse') %}
+<details class="card">
+  <summary>Bearbeiten</summary>
+  <form method="post" action="{{ url_for('student_edit', sid=st.id) }}" class="grid">
+    {{ csrf_field }}
+    <label class="wide">Name <input name="name" value="{{ st.name }}" maxlength="100" required></label>
+    <div class="actions"><button name="action" value="rename">Speichern</button></div>
+  </form>
+  <form method="post" action="{{ url_for('student_edit', sid=st.id) }}">
+    {{ csrf_field }}
+    <button class="ghost" name="action" value="toggle">{{ 'Reaktivieren' if not st.active else 'Deaktivieren (z. B. Klasse verlassen)' }}</button>
+  </form>
+</details>
+{% endif %}
+
+<h2>Sammlungen</h2>
+{% if status %}
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Sammlung</th><th class="num">Soll</th><th class="num">bezahlt</th><th class="num">offen</th></tr></thead>
+  <tbody>
+  {% for x in status %}
+  <tr class="{{ 'muted' if x.c.closed }}">
+    <td><a href="{{ url_for('collection', cid=x.c.id) }}">{{ x.c.title }}</a>{% if x.c.closed %} <span class="tag">abgeschlossen</span>{% endif %}</td>
+    <td class="num">{{ x.c.amount_cents|euro }}</td>
+    <td class="num">{{ x.paid|euro }}</td>
+    <td class="num {{ 'neg' if x.open else 'pos' }}">{{ x.open|euro if x.open else '✓' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Keine Sammlungen.</p>
+{% endif %}
+
+<h2>Buchungen</h2>
+{% include "_booking_table.html" %}
+{% endblock %}

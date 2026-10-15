@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Sammlungen – {{ klasse }}{% endblock %}
+{% block content %}
+<h1>Sammlungen</h1>
+{% if can('kasse') %}
+<details class="card" {{ 'open' if not summaries }}>
+  <summary>Neue Sammlung</summary>
+  <form method="post" class="grid">
+    {{ csrf_field }}
+    <label class="wide">Titel <input name="title" maxlength="120" placeholder="Ausflug Zoo" required></label>
+    <label>Betrag pro Kopf (€) <input name="amount" inputmode="decimal" placeholder="12,00" required></label>
+    <label>Fällig am (optional) <input name="due_date" type="date"></label>
+    <div class="actions"><button>Anlegen</button></div>
+  </form>
+</details>
+{% endif %}
+
+{% if summaries %}
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Sammlung</th><th class="num">pro Kopf</th><th>bezahlt</th><th class="num">eingenommen</th><th class="num">offen</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for s in summaries %}
+  <tr class="{{ 'muted' if s.c.closed }}">
+    <td><a href="{{ url_for('collection', cid=s.c.id) }}">{{ s.c.title }}</a>
+      {% if s.c.due_date %}<div class="small">fällig {{ s.c.due_date|date_de }}</div>{% endif %}</td>
+    <td class="num">{{ s.c.amount_cents|euro }}</td>
+    <td>{{ s.total - s.open_count }} / {{ s.total }}</td>
+    <td class="num">{{ s.paid_sum|euro }}</td>
+    <td class="num {{ 'neg' if s.open_sum }}">{{ s.open_sum|euro }}</td>
+    <td>{{ 'abgeschlossen' if s.c.closed else 'offen' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Noch keine Sammlungen.</p>
+{% endif %}
+{% endblock %}
