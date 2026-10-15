@@ -24,7 +24,8 @@ main.wide { max-width: 1400px; }
 
 .top { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem;
   padding: .7rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
-.brand { font-weight: 700; color: var(--text); }
+.brand { font-weight: 700; color: var(--text); display: inline-flex; align-items: center; gap: .5rem; }
+.brand img { display: block; }
 .top nav { display: flex; gap: 1rem; flex: 1; flex-wrap: wrap; }
 .top nav a { color: var(--muted); }
 .top nav a.on { color: var(--text); font-weight: 600; }
@@ -105,5 +106,7 @@ details.storno input { margin: 0; min-width: 9rem; padding: .3rem .5rem; }
 .flash.error { background: var(--flash-err); }
 
 .login { max-width: 380px; margin: 3rem auto; }
+.login-logo { display: block; margin: .3rem auto .8rem; }
+.login h1 { text-align: center; }
 .login button { width: 100%; margin-top: .3rem; }
 code { background: var(--bg); padding: .1rem .35rem; border-radius: 4px; }

@@ -2,6 +2,7 @@
 {% block title %}Anmelden – {{ klasse }}{% endblock %}
 {% block content %}
 <div class="login card">
+  <img class="login-logo" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="64" height="64">
   <h1>{{ klasse }}</h1>
   {% if no_users %}
   <p class="hint">Noch kein Benutzer angelegt. Im Container ausführen:<br>

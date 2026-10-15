@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- vereinfachtes Logo: kräftigere Linien, damit es mit 16 px noch lesbar ist -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#1f6f5c"/>
+  <circle cx="32" cy="19" r="12" fill="#f4c752"/>
+  <path d="M37.2 14 A6.8 6.8 0 1 0 37.2 24" fill="none" stroke="#1f6f5c" stroke-width="3.6" stroke-linecap="round"/>
+  <path d="M24.5 19 H33" stroke="#1f6f5c" stroke-width="3.2" stroke-linecap="round"/>
+  <rect x="8" y="34" width="48" height="23" rx="6" fill="#fff"/>
+  <rect x="21" y="39" width="22" height="5.5" rx="2.75" fill="#1f6f5c"/>
+</svg>

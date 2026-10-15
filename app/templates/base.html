@@ -4,12 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ klasse }}{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='favicon-32.png') }}" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <meta name="theme-color" content="#1f6f5c">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 {% if user %}
 <header class="top">
-  <a class="brand" href="{{ url_for('index') }}">{{ klasse }}</a>
+  <a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="26" height="26">{{ klasse }}</a>
   <nav>
     <a href="{{ url_for('bookings') }}" class="{{ 'on' if request.endpoint == 'bookings' }}">Buchungen</a>
     <a href="{{ url_for('collections') }}" class="{{ 'on' if request.endpoint in ('collections', 'collection') }}">Sammlungen</a>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Klassenkasse">
+  <title>Klassenkasse</title>
+  <defs>
+    <linearGradient id="kk-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38a585"/>
+      <stop offset="1" stop-color="#1f6f5c"/>
+    </linearGradient>
+  </defs>
+  <!-- Kachel -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#kk-bg)"/>
+  <!-- Münze mit Euro-Zeichen -->
+  <circle cx="32" cy="19" r="10.5" fill="#f4c752"/>
+  <circle cx="32" cy="19" r="10.5" fill="none" stroke="#d9a728" stroke-width="1.5"/>
+  <path d="M36.6 14.6 A6 6 0 1 0 36.6 23.4" fill="none" stroke="#1f6f5c" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M25.5 17.4 H32.5 M25.5 20.6 H32.5" stroke="#1f6f5c" stroke-width="1.9" stroke-linecap="round"/>
+  <!-- Kasse mit Schlitz -->
+  <rect x="11" y="33" width="42" height="21" rx="5" fill="#fff"/>
+  <rect x="23" y="37.5" width="18" height="4" rx="2" fill="#1f6f5c"/>
+  <path d="M17 48 H47" stroke="#1f6f5c" stroke-width="2" stroke-linecap="round" opacity=".25"/>
+</svg>

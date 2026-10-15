@@ -9,6 +9,13 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.5.0] – 2026-10-15
+
+### Hinzugefügt
+- **Logo und Favicon:** Euro-Münze über einer Kasse im Grün der App. Das Logo steht in der
+  Kopfzeile und auf der Anmeldeseite; Favicon als SVG mit PNG-Ersatz (32 px) und ein
+  Symbol für den iOS-Homescreen (180 px).
+
 ## [0.4.0] – 2026-10-15
 
 ### Geändert

@@ -1,3 +1,5 @@
+<p align="center"><img src="app/static/logo.svg" width="96" alt="Klassenkasse-Logo"></p>
+
 # Klassenkasse
 
 Web-App zur Verwaltung einer Klassenkasse: Einnahmen und Ausgaben buchen, Sammelaktionen
