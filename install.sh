@@ -22,6 +22,8 @@ set -euo pipefail
 APP_DIR=/opt/klassenkasse
 MARK=klassenkasse
 PORT=8000
+# pct exec hat einen knappen PATH ohne /usr/local/bin – daher immer mit vollem Pfad
+ADMIN_CMD=/usr/local/bin/klassenkasse-admin
 LOG=/var/log/klassenkasse-install.log
 
 REPO="${KK_REPO:-StofflHD/klassenkasse}"
@@ -150,7 +152,7 @@ set_root_password() {
 set_login() {
   printf '%s\n' "$KK_PASSWORD" |
     pct exec "$CTID" -- env LANG=C.UTF-8 LC_ALL=C.UTF-8 \
-      klassenkasse-admin create-user "$KK_USER" --role admin --password-stdin
+      "$ADMIN_CMD" create-user "$KK_USER" --role admin --password-stdin
 }
 
 print_login() {
@@ -160,7 +162,7 @@ print_login() {
     echo -e "  Login:          ${BD}$KK_USER${CL} mit deinem Passwort"
   fi
   echo "  Neues Passwort: in der Web-Oberfläche (Klick auf den Benutzernamen) oder"
-  echo "                  pct exec $CTID -- klassenkasse-admin create-user $KK_USER --role admin"
+  echo "                  pct exec $CTID -- $ADMIN_CMD create-user $KK_USER --role admin"
 }
 
 storages() { pvesm status --content "$1" 2>/dev/null | awk 'NR>1 && $3=="active" {print $1, $2}'; }
@@ -338,10 +340,22 @@ do_update() {
   before=$(pct exec "$CTID" -- cat "$APP_DIR/VERSION" 2>/dev/null || echo "alt")
   step "Auf Netzwerk warten" wait_for_network
   step "Datenbank sichern" ct_exec "[ ! -f /var/lib/klassenkasse/klassenkasse.db ] || \
-    klassenkasse-admin backup /var/lib/klassenkasse/backup/vor-update_${before}_\$(date +%F_%H%M).db"
+    $ADMIN_CMD backup /var/lib/klassenkasse/backup/vor-update_${before}_\$(date +%F_%H%M).db"
   step "App aktualisieren (Daten und Konfiguration bleiben)" push_app
+  # z. B. wenn eine Installation vor dem Anlegen des Administrators abgebrochen ist
+  local need_login=0
+  if [[ $(pct exec "$CTID" -- "$ADMIN_CMD" count-users 2>/dev/null | tail -n1) == 0 ]]; then
+    need_login=1
+    warn "Es gibt noch keinen Benutzer – bitte jetzt den ersten Administrator anlegen"
+    ask KK_USER "Benutzername des ersten Administrators" "admin"
+    [[ $KK_USER =~ ^[A-Za-z0-9._-]{1,50}$ ]] || die "Benutzername: nur Buchstaben, Ziffern, . _ -"
+    ask_password
+    step "Administrator anlegen" set_login
+  fi
   step "Web-Oberfläche prüfen" wait_for_web
   echo -e "\n${GN}${BD}Update fertig:${CL} $before → $(pct exec "$CTID" -- cat "$APP_DIR/VERSION")  http://$(ct_ip):$PORT"
+  [[ $need_login == 1 ]] && print_login
+  return 0
 }
 
 do_uninstall() {

@@ -93,10 +93,10 @@ systemctl restart klassenkasse
 
 [[ $QUIET == 1 ]] && exit 0
 
-if [ "$(klassenkasse-admin count-users | tail -n1)" = "0" ]; then
+if [ "$(/usr/local/bin/klassenkasse-admin count-users | tail -n1)" = "0" ]; then
   echo "==> Ersten Administrator anlegen"
   read -rp "Benutzername [admin]: " ADMIN || true
-  klassenkasse-admin create-user "${ADMIN:-admin}" --role admin
+  /usr/local/bin/klassenkasse-admin create-user "${ADMIN:-admin}" --role admin
 fi
 
 sleep 1

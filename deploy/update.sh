@@ -62,7 +62,7 @@ curl -fsSL --max-time 120 "https://codeload.github.com/$REPO/tar.gz/$REF" | tar 
 
 if [[ -f $DATA_DIR/klassenkasse.db ]]; then
   backup="$DATA_DIR/backup/vor-update_${installed}_$(date +%F_%H%M).db"
-  klassenkasse-admin backup "$backup" >/dev/null || die "Sicherung der Datenbank fehlgeschlagen"
+  /usr/local/bin/klassenkasse-admin backup "$backup" >/dev/null || die "Sicherung der Datenbank fehlgeschlagen"
   ok "Datenbank gesichert: $backup"
 fi
 

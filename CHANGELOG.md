@@ -9,6 +9,16 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.1.1] – 2026-10-15
+
+### Behoben
+- Die Installation brach beim Schritt *Administrator anlegen* ab
+  (`env: 'klassenkasse-admin': No such file or directory`): `pct exec` sucht nicht in
+  `/usr/local/bin`. Die Skripte rufen den Befehl jetzt mit vollem Pfad auf.
+- `install.sh --update` legt den ersten Administrator an, wenn es noch keinen Benutzer gibt.
+  So lässt sich eine abgebrochene Installation fertigstellen, ohne den Container neu
+  anzulegen.
+
 ## [0.1.0] – 2026-10-15
 
 Erste veröffentlichte Version.

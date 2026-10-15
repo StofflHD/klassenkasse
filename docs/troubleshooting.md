@@ -10,6 +10,9 @@ auf dem Host.
 - **„hat nach 2 Minuten kein Netz/DNS“** – DHCP im Netz? Bei fester IP: Gateway richtig?
   Im Container nachsehen: `pct enter <ID>`, dann `ip a` und `cat /etc/resolv.conf`.
 - **„CT … gibt es schon“** – andere ID wählen oder `--update` nutzen.
+- **Abbruch nach „App installieren“** – der Container ist schon da. `install.sh --update`
+  mit seiner ID ausführen: das schließt die Installation ab und legt den ersten
+  Administrator an, falls es noch keinen gibt.
 
 ## Die Web-Oberfläche antwortet nicht
 
