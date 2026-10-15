@@ -81,8 +81,7 @@ def init_db():
 # Erziehungsberechtigte: je zwei Personen mit eigenen Daten, Spalten g1_*, g2_*
 GUARDIAN_FIELDS = [
     ("name", "Name", 100),
-    ("phone", "Telefon", 40),
-    ("mobile", "Mobil", 40),
+    ("phone", "Telefon", 80),
     ("email", "E-Mail", 120),
     ("address", "Anschrift, falls abweichend", 200),
 ]
@@ -91,6 +90,11 @@ GUARDIAN_COLUMNS = [f"g{n}_{k}" for n in (1, 2) for k, _l, _m in GUARDIAN_FIELDS
 
 def columns(db, table):
     return {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
+
+
+def join_phones(a, b):
+    """SQL-Ausdruck: zwei Nummernspalten zu einer, getrennt mit " / "."""
+    return f"CASE WHEN {b} = '' THEN {a} WHEN {a} = '' THEN {b} ELSE {a} || ' / ' || {b} END"
 
 
 def migrate(db):
@@ -113,8 +117,15 @@ def migrate(db):
             for col in GUARDIAN_COLUMNS:
                 db.execute(f"ALTER TABLE students ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
             # Daten aus 0.2.0 verlustfrei nach Erziehungsberechtigte/r 1 übernehmen
-            db.execute("""UPDATE students SET g1_name = guardians, g1_phone = phone,
-                                              g1_mobile = phone2, g1_email = email""")
+            db.execute(f"""UPDATE students SET g1_name = guardians, g1_email = email,
+                                               g1_phone = {join_phones('phone', 'phone2')}""")
+        if "g1_mobile" in cols:
+            # 0.3.0 hatte Telefon und Mobil getrennt: in Telefon zusammenführen. Die
+            # Spalte g*_mobile bleibt ungenutzt stehen und wird geleert, damit ein
+            # erneuter Lauf nichts doppelt anhängt.
+            for n in (1, 2):
+                db.execute(f"""UPDATE students SET g{n}_phone = {join_phones(f'g{n}_phone', f'g{n}_mobile')},
+                                                   g{n}_mobile = '' WHERE g{n}_mobile != ''""")
         db.execute("COMMIT")
     except Exception:
         db.execute("ROLLBACK")
@@ -547,6 +558,15 @@ def email_list(text):
     return [a.strip() for a in (text or "").replace(";", ",").split(",") if a.strip()]
 
 
+def phone_list(text):
+    """'089 123 / 0171 456' -> ['089 123', '0171 456'] (jede Nummer einzeln anrufbar)"""
+    return [p.strip() for p in re.split(r"[/,;]", text or "") if p.strip()]
+
+
+app.jinja_env.filters["phones"] = phone_list
+app.jinja_env.filters["tel"] = lambda p: re.sub(r"[^0-9+]", "", p)
+
+
 def read_student_form(f):
     data = {"name": (f.get("name") or "").strip()[:100]}
     if not data["name"]:
@@ -571,7 +591,7 @@ def guardians(st):
     for n in (1, 2):
         g = {k: st[f"g{n}_{k}"] for k, _l, _m in GUARDIAN_FIELDS}
         if any(g.values()):
-            g["n"], g["emails"] = n, email_list(g["email"])
+            g["n"], g["emails"], g["phones"] = n, email_list(g["email"]), phone_list(g["phone"])
             result.append(g)
     return result
 

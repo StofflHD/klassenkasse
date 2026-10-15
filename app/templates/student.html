@@ -20,8 +20,7 @@
     <div class="small">Erziehungsberechtigte/r {{ g.n }}</div>
     <strong>{{ g.name or '–' }}</strong>
     <dl class="contact">
-      {% if g.phone %}<dt>Telefon</dt><dd><a href="tel:{{ g.phone|replace(' ', '') }}">{{ g.phone }}</a></dd>{% endif %}
-      {% if g.mobile %}<dt>Mobil</dt><dd><a href="tel:{{ g.mobile|replace(' ', '') }}">{{ g.mobile }}</a></dd>{% endif %}
+      {% if g.phones %}<dt>Telefon</dt><dd>{% for t in g.phones %}<a href="tel:{{ t|tel }}">{{ t }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}</dd>{% endif %}
       {% if g.emails %}<dt>E-Mail</dt><dd>{% for m in g.emails %}<a href="mailto:{{ m }}">{{ m }}</a>{% if not loop.last %}<br>{% endif %}{% endfor %}</dd>{% endif %}
       {% if g.address %}<dt>Anschrift</dt><dd>{{ g.address }}</dd>{% endif %}
     </dl>

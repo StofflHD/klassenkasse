@@ -9,6 +9,16 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.4.0] – 2026-10-15
+
+### Geändert
+- **Ein Telefonfeld je Erziehungsberechtigte/m:** *Telefon* und *Mobil* sind
+  zusammengelegt – eine Nummer reicht, Festnetz oder mobil. Wer doch zwei braucht, trennt
+  sie mit `/`; jede Nummer ist einzeln anklickbar.
+- Beim ersten Start werden vorhandene Mobilnummern ins Telefonfeld übernommen. Stand bei
+  einer Person beides drin, stehen danach beide Nummern im Telefonfeld
+  („089 123456 / 0171 2345678“) – bei Bedarf über *Bearbeiten* auf eine kürzen.
+
 ## [0.3.0] – 2026-10-15
 
 ### Geändert

@@ -5,8 +5,8 @@
 {% macro guardian_cell(s, n) -%}
   {%- set p = 'g%d_' % n -%}
   {%- if s[p ~ 'name'] %}<strong>{{ s[p ~ 'name'] }}</strong>{% endif -%}
-  {%- for key, icon in (('phone', 'Tel.'), ('mobile', 'Mobil')) if s[p ~ key] %}
-    <div class="nowrap"><span class="small">{{ icon }}</span> <a href="tel:{{ s[p ~ key]|replace(' ', '') }}">{{ s[p ~ key] }}</a></div>
+  {%- for t in s[p ~ 'phone']|phones %}
+    <div class="nowrap"><a href="tel:{{ t|tel }}">{{ t }}</a></div>
   {%- endfor -%}
   {%- for m in s[p ~ 'email'].split(',') if m.strip() %}<div><a href="mailto:{{ m.strip() }}">{{ m.strip() }}</a></div>{% endfor -%}
   {%- if s[p ~ 'address'] %}<div class="small">{{ s[p ~ 'address'] }}</div>{% endif -%}

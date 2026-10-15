@@ -9,8 +9,7 @@
   <legend>Erziehungsberechtigte/r {{ n }}</legend>
   <div class="grid">
     <label class="wide">Name <input name="g{{ n }}_name" value="{{ s['g%d_name' % n] if s }}" maxlength="100" autocomplete="off" placeholder="Vor- und Nachname"></label>
-    <label>Telefon <input type="tel" name="g{{ n }}_phone" value="{{ s['g%d_phone' % n] if s }}" maxlength="40" autocomplete="off"></label>
-    <label>Mobil <input type="tel" name="g{{ n }}_mobile" value="{{ s['g%d_mobile' % n] if s }}" maxlength="40" autocomplete="off"></label>
+    <label class="wide">Telefon <input type="tel" name="g{{ n }}_phone" value="{{ s['g%d_phone' % n] if s }}" maxlength="80" autocomplete="off" placeholder="Festnetz oder mobil; mehrere mit / trennen"></label>
     <label class="wide">E-Mail <input name="g{{ n }}_email" value="{{ s['g%d_email' % n] if s }}" maxlength="120" inputmode="email" autocomplete="off"></label>
     <label class="wide">Anschrift, falls abweichend <input name="g{{ n }}_address" value="{{ s['g%d_address' % n] if s }}" maxlength="200" autocomplete="off" placeholder="Straße, PLZ Ort"></label>
   </div>

@@ -35,8 +35,8 @@ Systembenutzer `klassenkasse` mit systemd-Härtung (`ProtectSystem=strict`, nur
 
 ```
 students     (id, name, active, birthday, street, zip, city, notes,
-              g1_name, g1_phone, g1_mobile, g1_email, g1_address,
-              g2_name, g2_phone, g2_mobile, g2_email, g2_address)
+              g1_name, g1_phone, g1_email, g1_address,
+              g2_name, g2_phone, g2_email, g2_address)
 collections  (id, title, amount_cents, due_date, closed)
 bookings     (id, booking_date, kind in/out, amount_cents, purpose,
               student_id?, collection_id?, created_by, created_at,
@@ -51,8 +51,9 @@ Stornos.
 `schema.sql` beschreibt den aktuellen Stand und nutzt nur `CREATE … IF NOT EXISTS`. Bestehende
 Datenbanken bringt `migrate()` in `app.py` beim Start auf diesen Stand – in einer
 Schreibtransaktion (`BEGIN IMMEDIATE`), damit Dienst und `klassenkasse-admin` sich nicht in
-die Quere kommen. Neue Spalten also in beiden Stellen ergänzen. In Datenbanken aus 0.2.0
-bleiben die nicht mehr genutzten Spalten `guardians`, `phone`, `phone2`, `email` stehen.
+die Quere kommen. Neue Spalten also in beiden Stellen ergänzen. In älteren Datenbanken
+bleiben nicht mehr genutzte Spalten stehen: `guardians`, `phone`, `phone2`, `email` (0.2.0)
+und `g1_mobile`, `g2_mobile` (0.3.0, nach der Übernahme geleert).
 
 ## Release
 

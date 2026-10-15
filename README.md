@@ -14,7 +14,7 @@ einzigen Befehl installiert.
 - **Sammlungen** mit Soll pro Kopf: Liste „bezahlt / offen“, Zahlung mit einem Klick erfassen
   (Teilzahlungen möglich)
 - **Klassenliste** als Tabelle: Geburtstag, Anschrift, Notiz und zwei Erziehungsberechtigte
-  in eigenen Spalten (Name, Telefon, Mobil, E-Mail, abweichende Anschrift), mit Suche und
+  in eigenen Spalten (Name, Telefon, E-Mail, abweichende Anschrift), mit Suche und
   CSV-Export
 - **Pro Schüler/in:** Kontaktdaten, alle Zahlungen und offene Beträge
 - **Revisionssicher:** Buchungen können nicht gelöscht oder geändert werden – nur storniert

@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS students (
     active      INTEGER NOT NULL DEFAULT 1,
     created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
     -- Klassenliste. Ältere Datenbanken bringt migrate() in app.py auf diesen Stand;
-    -- dort bleiben die Spalten guardians, phone, phone2, email aus 0.2.0 ungenutzt stehen.
+    -- dort bleiben die Spalten guardians, phone, phone2, email (0.2.0) und g1_mobile,
+    -- g2_mobile (0.3.0) ungenutzt stehen. Mehrere Telefonnummern: mit / getrennt.
     birthday    TEXT,
     street      TEXT NOT NULL DEFAULT '',
     zip         TEXT NOT NULL DEFAULT '',
@@ -23,12 +24,10 @@ CREATE TABLE IF NOT EXISTS students (
     -- Erziehungsberechtigte 1 und 2, jeweils mit eigenen Daten
     g1_name     TEXT NOT NULL DEFAULT '',
     g1_phone    TEXT NOT NULL DEFAULT '',
-    g1_mobile   TEXT NOT NULL DEFAULT '',
     g1_email    TEXT NOT NULL DEFAULT '',
     g1_address  TEXT NOT NULL DEFAULT '',
     g2_name     TEXT NOT NULL DEFAULT '',
     g2_phone    TEXT NOT NULL DEFAULT '',
-    g2_mobile   TEXT NOT NULL DEFAULT '',
     g2_email    TEXT NOT NULL DEFAULT '',
     g2_address  TEXT NOT NULL DEFAULT ''
 );
