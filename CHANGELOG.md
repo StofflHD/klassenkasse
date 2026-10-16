@@ -9,6 +9,34 @@ Die Versionen bleiben unter 1.0, bis zum ersten finalen Release, das 1.0.0 wird.
 Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmox-Host mit
 `bash <(curl -fsSL https://raw.githubusercontent.com/StofflHD/klassenkasse/main/install.sh) --update`
 
+## [0.7.0] – 2026-10-16
+
+### Hinzugefügt
+- **Schutz gegen Passwort-Raten:** Nach 3 fehlgeschlagenen Anmeldungen (je IP-Adresse,
+  innerhalb von 24 Stunden) wird die IP-Adresse gesperrt und erreicht die Klassenkasse
+  nicht mehr. Die Anmeldeseite zeigt vorher, wie viele Versuche bleiben. Anzahl einstellbar
+  mit `KK_MAX_LOGIN_FAILURES`.
+- **Sperrliste für Administratoren** unter *Benutzer → Gesperrte IP-Adressen*: entsperren,
+  Adressen oder Netze (auch IPv6) von Hand sperren, letzte Fehlversuche ansehen und
+  zurücksetzen. Im Container: `klassenkasse-admin blocklist` und
+  `klassenkasse-admin unblock IP|--all`.
+- Copyright- und Lizenzhinweis (GPL-3.0) im Footer, in der README und als SPDX-Kopf in den
+  Quelldateien; Links zu GitHub und Changelog im Footer.
+
+### Geändert
+- **Handy-Ansicht:** Die Kopfzeile ordnet Titel, Abmelden und Menü sauber an; Tabellen werden
+  auf schmalen Bildschirmen zu Karten (Spaltenname vor jedem Wert) statt seitlich zu
+  scrollen. Behoben: Die Buttons auf *Buchungen* überlappten die Zeile „Stand …“.
+
+### Entfernt
+- **Geburtstag** aus Klassenliste, Formular, Export und Import. Bereits gespeicherte
+  Geburtstage werden beim ersten Start gelöscht (Datensparsamkeit); die Sicherung, die
+  `update` vorher anlegt, enthält sie noch. Eine Spalte „Geburtstag“ in Import-Dateien wird
+  ignoriert.
+
+**Hinter einem Reverse-Proxy:** `KK_BEHIND_PROXY=1` muss gesetzt sein, sonst sperrt die IP-Sperre
+im Zweifel den Proxy und damit alle (siehe [Reverse-Proxy](docs/reverse-proxy.md)).
+
 ## [0.6.0] – 2026-10-15
 
 ### Hinzugefügt

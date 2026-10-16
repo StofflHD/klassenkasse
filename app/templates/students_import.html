@@ -34,8 +34,8 @@
     <td class="nowrap">{{ item.name or "–" }}</td>
     <td>
       {% if item.error %}<span class="neg">{{ item.error }}</span>
-      {% elif item.action == 'ändern' %}{% for c in item.changes %}{{ labels[c] }}{% if c == 'active' %}: {{ 'aktiv' if item.data.active else 'inaktiv' }}{% elif c == 'birthday' %}: {{ item.data[c]|date_de }}{% else %}: {{ item.data[c] }}{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}
-      {% elif item.action == 'neu' %}<span class="small">{% for k, v in item.data.items() if v and k not in ('name', 'active') %}{{ labels[k] }}: {{ v|date_de if k == 'birthday' else v }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+      {% elif item.action == 'ändern' %}{% for c in item.changes %}{{ labels[c] }}{% if c == 'active' %}: {{ 'aktiv' if item.data.active else 'inaktiv' }}{% else %}: {{ item.data[c] }}{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}
+      {% elif item.action == 'neu' %}<span class="small">{% for k, v in item.data.items() if v and k not in ('name', 'active') %}{{ labels[k] }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
       {% endif %}
     </td>
   </tr>

@@ -1,6 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 StofflHD
 """Klassenkasse – Web-App zur Verwaltung einer Klassenkasse (Flask + SQLite)."""
 import os
 import re
+import ipaddress
 import json
 import secrets
 import sqlite3
@@ -44,6 +47,13 @@ app.config.update(
 )
 if os.environ.get("KK_BEHIND_PROXY") == "1":
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+# Brute-Force-Schutz: nach so vielen Fehlversuchen (innerhalb von 24 h, seit der letzten
+# erfolgreichen Anmeldung) wird die IP-Adresse gesperrt, bis ein Administrator sie freigibt
+try:
+    MAX_LOGIN_FAILURES = max(1, int(os.environ.get("KK_MAX_LOGIN_FAILURES", "3")))
+except ValueError:
+    MAX_LOGIN_FAILURES = 3
 
 ROLES = {"lesen": 0, "kasse": 1, "admin": 2}
 ROLE_LABELS = {"lesen": "Nur lesen", "kasse": "Kassenwart", "admin": "Administrator"}
@@ -113,11 +123,9 @@ def migrate(db):
         cols = columns(db, "students")
         if "g1_name" not in cols:
             # 0.1.x: noch keine Kontaktfelder; 0.2.0: eine Spalte für alle Eltern
-            for col in ("birthday", "street", "zip", "city", "notes",
-                        "guardians", "phone", "phone2", "email"):
+            for col in ("street", "zip", "city", "notes", "guardians", "phone", "phone2", "email"):
                 if col not in cols:
-                    db.execute(f"ALTER TABLE students ADD COLUMN {col} "
-                               + ("TEXT" if col == "birthday" else "TEXT NOT NULL DEFAULT ''"))
+                    db.execute(f"ALTER TABLE students ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
             for col in GUARDIAN_COLUMNS:
                 db.execute(f"ALTER TABLE students ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
             # Daten aus 0.2.0 verlustfrei nach Erziehungsberechtigte/r 1 übernehmen
@@ -130,6 +138,10 @@ def migrate(db):
             for n in (1, 2):
                 db.execute(f"""UPDATE students SET g{n}_phone = {join_phones(f'g{n}_phone', f'g{n}_mobile')},
                                                    g{n}_mobile = '' WHERE g{n}_mobile != ''""")
+        if "birthday" in cols:
+            # Geburtstage werden seit 0.7.0 nicht mehr erfasst – gespeicherte Werte löschen
+            # (Datensparsamkeit). Die Sicherung vor dem Update enthält sie noch.
+            db.execute("UPDATE students SET birthday = NULL WHERE birthday IS NOT NULL")
         db.execute("COMMIT")
     except Exception:
         db.execute("ROLLBACK")
@@ -218,9 +230,60 @@ def can(role):
     return bool(user) and ROLES[user["role"]] >= ROLES[role]
 
 
+# ---------------------------------------------------------------- Brute-Force-Schutz
+def client_ip():
+    """IP-Adresse des Aufrufers (hinter einem Reverse-Proxy nur mit KK_BEHIND_PROXY=1 richtig)."""
+    return request.remote_addr or ""
+
+
+def parse_network(text):
+    """'192.168.1.20', '2001:db8::1' oder '10.0.0.0/24' -> normalisierte Schreibweise."""
+    text = (text or "").strip()
+    try:
+        if "/" in text:
+            net = ipaddress.ip_network(text, strict=False)
+            return str(net.network_address) if net.num_addresses == 1 else str(net)
+        return str(ipaddress.ip_address(text))
+    except ValueError:
+        raise ValueError(f"Keine gültige IP-Adresse oder kein gültiges Netz: {text}")
+
+
+def blocking_entry(db, ip):
+    """Der Sperreintrag, der diese IP-Adresse erfasst – oder None."""
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return None
+    for row in db.execute("SELECT * FROM ip_blocks").fetchall():
+        try:
+            if addr in ipaddress.ip_network(row["ip"], strict=False):
+                return row
+        except ValueError:
+            continue
+    return None
+
+
+def record_failure(db, ip, username):
+    """Fehlversuch speichern; gibt die Zahl der Fehlversuche zurück und sperrt bei Bedarf."""
+    db.execute("DELETE FROM login_failures WHERE at < datetime('now', 'localtime', '-30 days')")
+    db.execute("INSERT INTO login_failures (ip, username) VALUES (?, ?)", (ip, username[:50]))
+    count = db.execute("""SELECT COUNT(*) FROM login_failures WHERE ip = ?
+                          AND at >= datetime('now', 'localtime', '-1 day')""", (ip,)).fetchone()[0]
+    if count >= MAX_LOGIN_FAILURES and blocking_entry(db, ip) is None:
+        db.execute("""INSERT OR IGNORE INTO ip_blocks (ip, reason, created_by) VALUES (?, ?, ?)""",
+                   (ip, f"{count} fehlgeschlagene Anmeldungen, zuletzt als „{username[:50]}“",
+                    "automatisch"))
+    db.commit()
+    return count
+
+
 @app.before_request
 def before():
     g.user = None
+    if request.endpoint != "static":
+        block = blocking_entry(get_db(), client_ip())
+        if block is not None:
+            return render_template("blocked.html", ip=client_ip(), block=block), 403
     uid = session.get("uid")
     if uid:
         g.user = get_db().execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
@@ -268,13 +331,22 @@ def login():
     db = get_db()
     no_users = db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0
     if request.method == "POST":
-        u = db.execute("SELECT * FROM users WHERE username = ?",
-                       (request.form.get("username", "").strip(),)).fetchone()
+        username = request.form.get("username", "").strip()
+        u = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
         if u and check_password_hash(u["pw_hash"], request.form.get("password", "")):
+            db.execute("DELETE FROM login_failures WHERE ip = ?", (client_ip(),))
+            db.commit()
             session.clear()
             session["uid"] = u["id"]
             return redirect(safe_next(request.args.get("next"), url_for("index")))
-        flash("Benutzername oder Passwort falsch.", "error")
+        count = record_failure(db, client_ip(), username)
+        left = MAX_LOGIN_FAILURES - count
+        if left <= 0:
+            app.logger.warning("IP %s nach %d Fehlversuchen gesperrt", client_ip(), count)
+            return redirect(url_for("login"))  # zeigt jetzt die Sperrseite
+        flash("Benutzername oder Passwort falsch. "
+              + (f"Noch {left} Versuche, dann wird diese IP-Adresse gesperrt." if left > 1
+                 else "Noch 1 Versuch, dann wird diese IP-Adresse gesperrt."), "error")
     return render_template("login.html", no_users=no_users)
 
 
@@ -540,7 +612,7 @@ def open_per_student(db):
     return result
 
 
-# Felder der Klassenliste außer Name und Geburtstag: (Spalte, Bezeichnung, max. Länge)
+# Felder der Klassenliste außer dem Namen: (Spalte, Bezeichnung, max. Länge)
 ADDRESS_FIELDS = [
     ("street", "Straße", 120),
     ("zip", "PLZ", 10),
@@ -577,7 +649,6 @@ def read_student_form(f):
             if not EMAIL_RE.match(addr):
                 raise ValueError(f"Ungültige E-Mail-Adresse: {addr}")
         data[f"g{n}_email"] = ", ".join(emails)
-    data["birthday"] = parse_date(f.get("birthday"), default_today=False)
     return data
 
 
@@ -593,7 +664,7 @@ def guardians(st):
 
 
 app.jinja_env.globals["guardians"] = guardians
-STUDENT_COLUMNS = ["name", "birthday"] + [k for k, _l, _m in ADDRESS_FIELDS] + GUARDIAN_COLUMNS
+STUDENT_COLUMNS = ["name"] + [k for k, _l, _m in ADDRESS_FIELDS] + GUARDIAN_COLUMNS
 
 
 @app.route("/schueler", methods=["GET", "POST"])
@@ -626,7 +697,7 @@ def students():
 
 
 def student_export_columns():
-    return ([("Name", "text"), ("Geburtstag", "date"), ("Straße", "text"), ("PLZ", "text"),
+    return ([("Name", "text"), ("Straße", "text"), ("PLZ", "text"),
              ("Ort", "text")]
             + [(guardian_header(n, label), "text") for n in (1, 2) for _k, label, _m in GUARDIAN_FIELDS]
             + [("Notiz", "text"), ("Status", "text")])
@@ -642,7 +713,7 @@ def export_students(fmt):
     rows = get_db().execute("SELECT * FROM students ORDER BY active DESC, name COLLATE NOCASE").fetchall()
     return export_response(
         fmt, f"klassenliste_{date.today().isoformat()}", student_export_columns(),
-        [[r["name"], r["birthday"], r["street"], r["zip"], r["city"]]
+        [[r["name"], r["street"], r["zip"], r["city"]]
          + [r[c] for c in GUARDIAN_COLUMNS]
          + [r["notes"], "aktiv" if r["active"] else "inaktiv"] for r in rows],
         "Klassenliste")
@@ -660,7 +731,6 @@ def norm_header(text):
 HEADER_ALIASES = {
     "name": "name", "schueler": "name", "schuelerin": "name", "schuelerinnen": "name", "kind": "name",
     "vorname": "first", "nachname": "last", "familienname": "last",
-    "geburtstag": "birthday", "geburtsdatum": "birthday", "geb": "birthday", "gebdatum": "birthday",
     "strasse": "street", "str": "street", "strassehausnummer": "street", "anschrift": "street",
     "adresse": "street",
     "plz": "zip", "postleitzahl": "zip",
@@ -716,24 +786,6 @@ def import_records(header, body, lines):
     return records, ignored
 
 
-def parse_birthday(text):
-    """'2014-03-12', '12.03.2014' oder '12.3.14' -> ISO-Datum."""
-    text = (text or "").strip()
-    m = re.fullmatch(r"(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})", text)
-    if m:
-        d, mo, y = (int(x) for x in m.groups())
-        if y < 100:
-            y += 2000 if y <= date.today().year % 100 else 1900
-        try:
-            return date(y, mo, d).isoformat()
-        except ValueError:
-            raise ValueError(f"Ungültiges Datum: {text}")
-    try:
-        return parse_date(text[:10], default_today=False)
-    except ValueError:
-        raise ValueError(f"Ungültiges Datum: {text}")
-
-
 def plan_import(db, records):
     """Was der Import tun würde: je Zeile Aktion, Daten, Änderungen und Fehler.
 
@@ -757,8 +809,6 @@ def plan_import(db, records):
             old = existing.get(key)
             form = {c: (old[c] or "") if old else "" for c in STUDENT_COLUMNS}
             form.update({k: v for k, v in rec.items() if k in STUDENT_COLUMNS and v})
-            if rec.get("birthday"):
-                form["birthday"] = parse_birthday(rec["birthday"])
             data = read_student_form(form)
             active = old["active"] if old else 1
             if rec.get("status"):
@@ -781,7 +831,7 @@ def plan_import(db, records):
 
 
 FIELD_LABELS = dict(
-    [("name", "Name"), ("birthday", "Geburtstag"), ("active", "Status")]
+    [("name", "Name"), ("active", "Status")]
     + [(k, label) for k, label, _m in ADDRESS_FIELDS]
     + [(f"g{n}_{k}", f"Erziehungsb. {n}: {label.split(',')[0]}") for n in (1, 2)
        for k, label, _m in GUARDIAN_FIELDS])
@@ -890,7 +940,40 @@ def users():
                 flash("Diesen Benutzernamen gibt es schon.", "error")
         return redirect(url_for("users"))
     rows = db.execute("SELECT * FROM users ORDER BY username COLLATE NOCASE").fetchall()
-    return render_template("users.html", rows=rows)
+    blocks = db.execute("SELECT * FROM ip_blocks ORDER BY blocked_at DESC").fetchall()
+    failures = db.execute("""SELECT ip, COUNT(*) AS n, MAX(at) AS last, GROUP_CONCAT(DISTINCT username) AS names
+                             FROM login_failures GROUP BY ip ORDER BY last DESC LIMIT 20""").fetchall()
+    return render_template("users.html", rows=rows, blocks=blocks, failures=failures,
+                           my_ip=client_ip(), max_failures=MAX_LOGIN_FAILURES)
+
+
+@app.route("/benutzer/sperrliste", methods=["POST"])
+@role_required("admin")
+def blocklist_edit():
+    db = get_db()
+    action = request.form.get("action")
+    try:
+        ip = parse_network(request.form.get("ip"))
+        if action == "add":
+            net = ipaddress.ip_network(ip, strict=False)
+            if ipaddress.ip_address(client_ip()) in net:
+                raise ValueError("Damit würdest du dich selbst aussperren (deine IP-Adresse: "
+                                 f"{client_ip()}).")
+            reason = request.form.get("reason", "").strip()[:200] or "von Hand gesperrt"
+            cur = db.execute("INSERT OR IGNORE INTO ip_blocks (ip, reason, created_by) VALUES (?, ?, ?)",
+                             (ip, reason, g.user["username"]))
+            flash(f"{ip} gesperrt." if cur.rowcount else f"{ip} ist schon gesperrt.", "ok")
+        elif action == "remove":
+            db.execute("DELETE FROM ip_blocks WHERE ip = ?", (ip,))
+            db.execute("DELETE FROM login_failures WHERE ip = ?", (ip,))
+            flash(f"{ip} entsperrt.", "ok")
+        elif action == "forget":
+            db.execute("DELETE FROM login_failures WHERE ip = ?", (ip,))
+            flash(f"Fehlversuche von {ip} zurückgesetzt.", "ok")
+        db.commit()
+    except ValueError as e:
+        flash(str(e), "error")
+    return redirect(url_for("users") + "#sperrliste")
 
 
 @app.route("/benutzer/<int:uid>", methods=["POST"])
@@ -958,6 +1041,41 @@ def create_user(username, role, password_stdin):
 def version():
     """Installierte Version anzeigen."""
     click.echo(VERSION)
+
+
+@app.cli.command("blocklist")
+def blocklist_cmd():
+    """Gesperrte IP-Adressen anzeigen."""
+    db = sqlite3.connect(app.config["DATABASE"])
+    rows = db.execute("SELECT ip, blocked_at, created_by, reason FROM ip_blocks ORDER BY blocked_at").fetchall()
+    db.close()
+    if not rows:
+        click.echo("Keine IP-Adresse gesperrt.")
+    for ip, at, by, reason in rows:
+        click.echo(f"{ip:<40} {at}  {by}: {reason}")
+
+
+@app.cli.command("unblock")
+@click.argument("ip", required=False)
+@click.option("--all", "all_", is_flag=True, help="Alle Sperren und Fehlversuche löschen.")
+def unblock_cmd(ip, all_):
+    """IP-Adresse entsperren (z. B. wenn sich ein Administrator ausgesperrt hat)."""
+    db = sqlite3.connect(app.config["DATABASE"])
+    if all_:
+        n = db.execute("DELETE FROM ip_blocks").rowcount
+        db.execute("DELETE FROM login_failures")
+    elif ip:
+        try:
+            ip = parse_network(ip)
+        except ValueError as e:
+            raise click.ClickException(str(e))
+        n = db.execute("DELETE FROM ip_blocks WHERE ip = ?", (ip,)).rowcount
+        db.execute("DELETE FROM login_failures WHERE ip = ?", (ip,))
+    else:
+        raise click.UsageError("IP-Adresse oder --all angeben.")
+    db.commit()
+    db.close()
+    click.echo(f"{n} Sperre(n) aufgehoben.")
 
 
 @app.cli.command("count-users")

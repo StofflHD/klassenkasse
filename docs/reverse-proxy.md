@@ -14,6 +14,13 @@ KK_COOKIE_SECURE=1
 und `systemctl restart klassenkasse`. Mit `KK_COOKIE_SECURE=1` klappt die Anmeldung nur noch
 über HTTPS – direkt per `http://<IP>:8000` nicht mehr.
 
+**Wichtig für die IP-Sperre:** Ohne `KK_BEHIND_PROXY=1` sieht die Klassenkasse bei jedem
+Zugriff nur die IP-Adresse des Proxys. Drei Tippfehler von irgendwem würden dann den Proxy
+sperren – und damit alle. Mit `KK_BEHIND_PROXY=1` wertet die App `X-Forwarded-For` aus; der
+Proxy muss diesen Header setzen (die Beispiele unten tun das). Läuft die Klassenkasse ohne
+Proxy direkt erreichbar, bleibt `KK_BEHIND_PROXY=0`, sonst könnte jeder seine Adresse
+vortäuschen.
+
 ## Nginx Proxy Manager
 
 Neuer Proxy Host: Domain eintragen, Scheme `http`, Forward Hostname = IP des Containers,

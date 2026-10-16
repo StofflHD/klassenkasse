@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Gesperrt – {{ klasse }}{% endblock %}
+{% block content %}
+<div class="login card">
+  <img class="login-logo" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="64" height="64">
+  <h1>Zugang gesperrt</h1>
+  <p>Deine IP-Adresse <code>{{ ip }}</code> ist gesperrt{% if block.created_by == 'automatisch' %}, weil die
+    Anmeldung zu oft fehlgeschlagen ist{% endif %}.</p>
+  <p class="hint">Bitte wende dich an die Administration der Klassenkasse. Die Sperre lässt sich unter
+    <em>Benutzer → Gesperrte IP-Adressen</em> aufheben – oder im Container mit
+    <code>klassenkasse-admin unblock {{ ip }}</code>.</p>
+</div>
+{% endblock %}

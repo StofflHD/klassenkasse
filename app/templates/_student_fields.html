@@ -1,6 +1,5 @@
 {# Formularfelder einer Schülerin / eines Schülers; s = Datensatz oder none #}
 <label class="wide">Name <input name="name" value="{{ s.name if s }}" maxlength="100" required></label>
-<label>Geburtstag <input type="date" name="birthday" value="{{ s.birthday or '' if s }}"></label>
 <label class="wide">Straße <input name="street" value="{{ s.street if s }}" maxlength="120" autocomplete="off"></label>
 <label>PLZ <input name="zip" value="{{ s.zip if s }}" maxlength="10" inputmode="numeric" autocomplete="off"></label>
 <label>Ort <input name="city" value="{{ s.city if s }}" maxlength="80" autocomplete="off"></label>

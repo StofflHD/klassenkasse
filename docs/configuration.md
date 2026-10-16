@@ -15,6 +15,7 @@ systemctl restart klassenkasse
 | `KK_BIND` | `0.0.0.0:8000` | Adresse und Port. `127.0.0.1:8000`, wenn ein Reverse-Proxy im selben Container läuft. |
 | `KK_BEHIND_PROXY` | `0` | `1`, wenn ein Reverse-Proxy davor steht (wertet `X-Forwarded-*` aus) |
 | `KK_COOKIE_SECURE` | `0` | `1`, wenn nur noch per HTTPS zugegriffen wird |
+| `KK_MAX_LOGIN_FAILURES` | `3` | Fehlgeschlagene Anmeldungen (je IP-Adresse, 24 h), nach denen die Adresse gesperrt wird |
 
 Updates lassen diese Datei unverändert.
 

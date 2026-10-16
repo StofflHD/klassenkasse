@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 StofflHD
 # Klassenkasse – einfacher Installer, läuft auf dem Proxmox-Host.
 #
 # Direkt von GitHub:
@@ -46,7 +48,7 @@ for a in "$@"; do
     -y | --yes) YES=1 ;;
     --update) ACTION=update ;;
     --uninstall) ACTION=uninstall ;;
-    -h | --help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h | --help) sed -n '4,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "Unbekannte Option: $a (siehe --help)" ;;
   esac
 done

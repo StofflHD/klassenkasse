@@ -15,7 +15,7 @@ einzigen Befehl installiert.
 - **Buchungen** mit Zweck, optional einer Schülerin/einem Schüler und einer Sammlung zugeordnet
 - **Sammlungen** mit Soll pro Kopf: Liste „bezahlt / offen“, Zahlung mit einem Klick erfassen
   (Teilzahlungen möglich)
-- **Klassenliste** als Tabelle: Geburtstag, Anschrift, Notiz und zwei Erziehungsberechtigte
+- **Klassenliste** als Tabelle: Anschrift, Notiz und zwei Erziehungsberechtigte
   in eigenen Spalten (Name, Telefon, E-Mail, abweichende Anschrift), mit Suche
 - **Import der Klassenliste** aus Excel (.xlsx) oder CSV, mit Vorschau vor dem Übernehmen
 - **Pro Schüler/in:** Kontaktdaten, alle Zahlungen und offene Beträge
@@ -23,6 +23,8 @@ einzigen Befehl installiert.
   (mit Grund, Zeit und Benutzer). Das erzwingt die Datenbank selbst per Trigger.
 - **Keine Rundungsfehler:** Beträge werden intern in Cent gespeichert
 - **Benutzer mit Rollen:** *Nur lesen* (Elternvertretung, Kassenprüfung), *Kassenwart*, *Administrator*
+- **Schutz gegen Passwort-Raten:** nach 3 fehlgeschlagenen Anmeldungen wird die IP-Adresse gesperrt;
+  die Sperrliste bearbeiten Administratoren in der Web-Oberfläche
 - **Export als Excel (.xlsx) oder CSV** für Buchungen, Sammlungen und Klassenliste
 - **Tägliche Sicherung** der Datenbank, 30 Tage aufbewahrt, und eine zusätzliche vor jedem Update
 - **Update mit einem Befehl:** `update` im Container
@@ -74,6 +76,7 @@ Datenbank, Benutzer und Konfiguration bleiben erhalten; die Datenbank wird vorhe
 | Aufgabe | Befehl (im Container) |
 |---|---|
 | Benutzer anlegen / Passwort zurücksetzen | `klassenkasse-admin create-user NAME --role admin\|kasse\|lesen` |
+| Gesperrte IP-Adressen anzeigen / entsperren | `klassenkasse-admin blocklist` / `klassenkasse-admin unblock IP` (oder `--all`) |
 | Manuelle Sicherung | `klassenkasse-admin backup /var/lib/klassenkasse/backup/manuell.db` |
 | Version | `klassenkasse-admin version` |
 | Status / Neustart | `systemctl status klassenkasse` / `systemctl restart klassenkasse` |
@@ -102,4 +105,12 @@ nur so viele Konten wie nötig anlegen.
 
 ## Lizenz
 
-[GPL-3.0](LICENSE)
+Copyright (C) 2026 StofflHD
+
+Die Klassenkasse ist freie Software: Du kannst sie unter den Bedingungen der
+[GNU General Public License Version 3](LICENSE), wie von der Free Software Foundation
+veröffentlicht, weitergeben und/oder ändern (GPL-3.0-only).
+
+Die Veröffentlichung erfolgt in der Hoffnung, dass sie nützlich ist, aber OHNE JEDE
+GEWÄHRLEISTUNG – sogar ohne die implizite Gewährleistung der MARKTREIFE oder der EIGNUNG FÜR
+EINEN BESTIMMTEN ZWECK. Details stehen in der GNU General Public License.

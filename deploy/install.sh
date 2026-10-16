@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 StofflHD
 # Klassenkasse – Installation/Update im Debian- oder Ubuntu-LXC.
 # Aufruf im Container als root aus dem Projektordner:  bash deploy/install.sh [--quiet]
 # Erneut ausführen = Update: Datenbank und Konfiguration bleiben erhalten.

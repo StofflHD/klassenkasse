@@ -53,4 +53,70 @@
   </tbody>
 </table>
 </div>
+
+<h2 id="sperrliste">Gesperrte IP-Adressen</h2>
+<p class="hint">Nach {{ max_failures }} fehlgeschlagenen Anmeldungen innerhalb von 24 Stunden wird eine IP-Adresse
+  automatisch gesperrt, bis sie hier freigegeben wird. Gesperrte Adressen erreichen die Klassenkasse gar nicht
+  mehr. Deine IP-Adresse: <code>{{ my_ip }}</code></p>
+{% if blocks %}
+<div class="tablewrap">
+<table>
+  <thead><tr><th>IP-Adresse / Netz</th><th>gesperrt seit</th><th>von</th><th>Grund</th><th></th></tr></thead>
+  <tbody>
+  {% for b in blocks %}
+  <tr>
+    <td class="nowrap"><code>{{ b.ip }}</code></td>
+    <td class="nowrap">{{ b.blocked_at|date_de }} {{ b.blocked_at[11:16] }}</td>
+    <td>{{ b.created_by }}</td>
+    <td>{{ b.reason }}</td>
+    <td>
+      <form method="post" action="{{ url_for('blocklist_edit') }}">
+        {{ csrf_field }}<input type="hidden" name="action" value="remove"><input type="hidden" name="ip" value="{{ b.ip }}">
+        <button class="ghost">entsperren</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">Keine IP-Adresse gesperrt.</p>
+{% endif %}
+
+<details class="card" style="margin-top:1rem">
+  <summary>IP-Adresse oder Netz von Hand sperren</summary>
+  <form method="post" action="{{ url_for('blocklist_edit') }}" class="grid">
+    {{ csrf_field }}<input type="hidden" name="action" value="add">
+    <label>IP-Adresse oder Netz <input name="ip" required maxlength="50" placeholder="z. B. 203.0.113.7 oder 203.0.113.0/24" autocomplete="off"></label>
+    <label>Grund (optional) <input name="reason" maxlength="200" autocomplete="off"></label>
+    <div class="actions"><button>Sperren</button></div>
+  </form>
+</details>
+
+{% if failures %}
+<h2>Letzte Fehlversuche</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>IP-Adresse</th><th class="num">Anzahl</th><th>zuletzt</th><th>versuchte Benutzernamen</th><th></th></tr></thead>
+  <tbody>
+  {% for f in failures %}
+  <tr>
+    <td class="nowrap"><code>{{ f.ip }}</code></td>
+    <td class="num">{{ f.n }}</td>
+    <td class="nowrap">{{ f.last|date_de }} {{ f.last[11:16] }}</td>
+    <td>{{ f.names }}</td>
+    <td>
+      <form method="post" action="{{ url_for('blocklist_edit') }}">
+        {{ csrf_field }}<input type="hidden" name="action" value="forget"><input type="hidden" name="ip" value="{{ f.ip }}">
+        <button class="ghost">zurücksetzen</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="small">Fehlversuche werden 30 Tage aufbewahrt; eine erfolgreiche Anmeldung setzt den Zähler der IP-Adresse zurück.</p>
+{% endif %}
 {% endblock %}

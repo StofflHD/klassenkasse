@@ -34,7 +34,7 @@
     {{ csrf_field }}
     <p class="small" style="margin-top:0">Erste Zeile = Überschriften. Erkannt werden die Spalten des Exports
       (am einfachsten: exportieren, in Excel ergänzen, wieder importieren) und gängige Namen wie
-      Vorname/Nachname, Geburtsdatum, Straße, PLZ, Ort, Telefon, E-Mail. Vorhandene Schüler/innen werden am
+      Vorname/Nachname, Straße, PLZ, Ort, Telefon, E-Mail. Vorhandene Schüler/innen werden am
       Namen erkannt und aktualisiert. Vor dem Übernehmen kommt eine Vorschau.</p>
     <label>Datei (.xlsx oder .csv, höchstens 5 MB)
       <input type="file" name="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required></label>
@@ -58,7 +58,7 @@
 <div class="tablewrap">
 <table class="classlist" id="classlist">
   <thead><tr>
-    <th>Name</th><th>Geburtstag</th><th>Anschrift</th>
+    <th>Name</th><th>Anschrift</th>
     <th>Erziehungsberechtigte/r 1</th><th>Erziehungsberechtigte/r 2</th>
     <th class="num">offen</th>{% if can('kasse') %}<th></th>{% endif %}
   </tr></thead>
@@ -68,7 +68,6 @@
   <tr class="{{ 'muted' if not s.active }}">
     <td><a href="{{ url_for('student', sid=s.id) }}">{{ s.name }}</a>{% if not s.active %} <span class="tag">inaktiv</span>{% endif %}
       {% if s.notes %}<div class="small">{{ s.notes }}</div>{% endif %}</td>
-    <td class="nowrap">{{ s.birthday|date_de }}</td>
     <td>{{ s.street }}{% if s.street and (s.zip or s.city) %}<br>{% endif %}{{ s.zip }} {{ s.city }}</td>
     {% for n in (1, 2) %}<td>{{ guardian_cell(s, n) }}</td>{% endfor %}
     <td class="num {{ 'neg' if o else 'pos' }}">{{ o|euro if o else '✓' }}</td>

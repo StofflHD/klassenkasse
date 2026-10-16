@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-only
+   Copyright (C) 2026 StofflHD */
 :root {
   --bg: #f5f6f4; --surface: #ffffff; --text: #1d2321; --muted: #6b7470;
   --line: #dfe3e0; --accent: #1f6f5c; --accent-text: #ffffff;
@@ -21,6 +23,7 @@ h2 { font-size: 1.1rem; margin: 2rem 0 .7rem; display: flex; gap: 1rem; align-it
 main { max-width: 1000px; margin: 0 auto; padding: 1.2rem 16px 3rem; }
 main.wide { max-width: 1400px; }
 .foot { max-width: 1000px; margin: 0 auto; padding: 0 16px 1.5rem; font-size: .75rem; color: var(--muted); text-align: center; }
+.foot a { color: var(--muted); text-decoration: underline; }
 
 .top { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem;
   padding: .7rem 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -94,7 +97,7 @@ dl.contact dd { margin: 0; }
 .tag.act-err { color: var(--neg); border-color: var(--neg); }
 .headrow > div .btn { padding: .4rem .8rem; }
 .empty, .hint { color: var(--muted); }
-.summary { color: var(--muted); margin-top: -.5rem; }
+.summary { color: var(--muted); margin-top: 0; }
 
 .pay { display: flex; gap: .4rem; align-items: center; }
 .pay input, .pay select { width: 9rem; margin: 0; padding: .3rem .5rem; }
@@ -103,7 +106,8 @@ details.storno summary { cursor: pointer; color: var(--muted); }
 details.storno form { display: flex; gap: .4rem; margin-top: .4rem; }
 details.storno input { margin: 0; min-width: 9rem; padding: .3rem .5rem; }
 
-.headrow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; }
+.headrow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .8rem; }
+.headrow h1 { margin: .2rem 0; }
 .headrow > div { display: flex; gap: .5rem; flex-wrap: wrap; }
 
 .flash { padding: .6rem .9rem; border-radius: 7px; margin-bottom: 1rem; background: var(--flash-ok); }
@@ -114,3 +118,35 @@ details.storno input { margin: 0; min-width: 9rem; padding: .3rem .5rem; }
 .login h1 { text-align: center; }
 .login button { width: 100%; margin-top: .3rem; }
 code { background: var(--bg); padding: .1rem .35rem; border-radius: 4px; }
+
+/* ------------------------------------------------------------------ Handy */
+@media (max-width: 640px) {
+  /* Kopfzeile: Titel und Abmelden oben, Menü darunter (bricht bei Bedarf um) */
+  .top { gap: .4rem 1rem; padding: .6rem 16px .3rem; }
+  .brand { flex: 1; min-width: 0; }
+  .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .top nav { order: 3; flex: 1 0 100%; gap: .3rem 1.1rem; padding: .3rem 0 .45rem; }
+  .top nav a { white-space: nowrap; }
+  .me { font-size: .85rem; }
+
+  /* Tabellen: jede Zeile wird eine Karte, die Spaltenüberschrift steht vor dem Wert
+     (data-label setzt das Skript in base.html) */
+  .tablewrap { overflow: visible; }
+  table.stack thead { display: none; }
+  table.stack, table.stack tbody, table.stack tr { display: block; width: 100%; }
+  table.stack tr { padding: .55rem .8rem; border-bottom: 1px solid var(--line); }
+  table.stack tr:last-child { border-bottom: 0; }
+  table.stack td { display: flex; gap: .8rem; justify-content: space-between; align-items: baseline;
+    padding: .2rem 0; border: 0; text-align: right; }
+  table.stack td::before { content: attr(data-label); flex: 0 0 auto; max-width: 45%;
+    color: var(--muted); font-size: .8rem; text-align: left; }
+  table.stack td[data-label=""]::before { content: none; }
+  table.stack td.blank { display: none; }
+  table.stack td > .v { min-width: 0; overflow-wrap: anywhere; }
+  table.stack td:first-child { font-weight: 600; }
+  table.stack td[colspan] { display: block; text-align: left; }
+  table.stack td[colspan]::before { content: none; }
+  table.stack .pay, table.stack details.storno form { flex-wrap: wrap; justify-content: flex-end; }
+  table.stack .pay input, table.stack .pay select { width: 7.5rem; }
+  table.stack form.inline { display: inline-flex; }
+}

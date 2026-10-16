@@ -30,6 +30,20 @@ Häufige Ursachen:
   `chown -R klassenkasse:klassenkasse /var/lib/klassenkasse`
 - Port belegt: `ss -tlnp | grep 8000`
 
+## „Zugang gesperrt“
+
+Die IP-Adresse wurde nach zu vielen fehlgeschlagenen Anmeldungen gesperrt. Ein
+Administrator (von einer anderen Adresse aus) gibt sie unter *Benutzer → Gesperrte
+IP-Adressen* frei, oder im Container:
+
+```bash
+klassenkasse-admin blocklist
+klassenkasse-admin unblock 192.0.2.10
+```
+
+Sind plötzlich alle gesperrt und taucht in der Sperrliste nur eine einzige Adresse auf (die
+des Reverse-Proxys), fehlt `KK_BEHIND_PROXY=1` – siehe [Reverse-Proxy](reverse-proxy.md).
+
 ## „Ungültige Anfrage (evtl. Seite neu laden)“
 
 Das Formular war zu alt (Schutz gegen gefälschte Anfragen). Seite neu laden und noch einmal

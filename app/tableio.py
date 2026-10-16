@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 StofflHD
 """Tabellen lesen und schreiben: CSV (Semikolon, UTF-8 mit BOM) und Excel (.xlsx).
 
 Spalten werden als (Überschrift, Art) beschrieben; Art ist "text", "date",

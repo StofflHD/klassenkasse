@@ -13,7 +13,7 @@
 <body>
 {% if user %}
 <header class="top">
-  <a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="26" height="26">{{ klasse }}</a>
+  <a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="26" height="26"><span>{{ klasse }}</span></a>
   <nav>
     <a href="{{ url_for('bookings') }}" class="{{ 'on' if request.endpoint == 'bookings' }}">Buchungen</a>
     <a href="{{ url_for('collections') }}" class="{{ 'on' if request.endpoint in ('collections', 'collection') }}">Sammlungen</a>
@@ -32,6 +32,30 @@
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
-<footer class="foot">Klassenkasse {{ version }}</footer>
+<footer class="foot">
+  Klassenkasse {{ version }} · © 2026 StofflHD ·
+  <a href="https://github.com/StofflHD/klassenkasse/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a> ·
+  <a href="https://github.com/StofflHD/klassenkasse" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://github.com/StofflHD/klassenkasse/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a>
+</footer>
+<script>
+  // Für die Handy-Ansicht: Tabellenzeilen werden Karten, jede Zelle bekommt ihre Spaltenüberschrift
+  document.querySelectorAll('main table').forEach(function (table) {
+    var heads = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) {
+      return th.textContent.trim();
+    });
+    table.classList.add('stack');
+    table.querySelectorAll('tbody tr').forEach(function (tr) {
+      Array.prototype.forEach.call(tr.children, function (td, i) {
+        td.setAttribute('data-label', heads[i] || '');
+        if (!td.textContent.trim() && !td.querySelector('input, select, button, a, img')) td.classList.add('blank');
+        var v = document.createElement('div');
+        v.className = 'v';
+        while (td.firstChild) v.appendChild(td.firstChild);
+        td.appendChild(v);
+      });
+    });
+  });
+</script>
 </body>
 </html>

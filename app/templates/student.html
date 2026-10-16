@@ -10,7 +10,6 @@
 <div class="cards contactcards">
   <div class="card">
     <dl class="contact">
-      <dt>Geburtstag</dt><dd>{{ st.birthday|date_de or '–' }}</dd>
       <dt>Anschrift</dt><dd>{% if st.street or st.zip or st.city %}{{ st.street }}{% if st.street and (st.zip or st.city) %}, {% endif %}{{ st.zip }} {{ st.city }}{% else %}–{% endif %}</dd>
       {% if st.notes %}<dt>Notiz</dt><dd>{{ st.notes }}</dd>{% endif %}
     </dl>

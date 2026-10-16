@@ -19,6 +19,34 @@
 Das eigene Konto kann ein Administrator in der Oberfläche weder löschen noch herabstufen.
 Sein Passwort ändert jede/r per Klick auf den eigenen Benutzernamen oben rechts.
 
+## Anmeldung und Sperrliste
+
+Nach **3 fehlgeschlagenen Anmeldungen** innerhalb von 24 Stunden wird die IP-Adresse
+gesperrt. Vorher zeigt die Anmeldeseite, wie viele Versuche noch bleiben. Eine gesperrte
+Adresse erreicht die Klassenkasse gar nicht mehr – auch nicht mit dem richtigen Passwort –,
+bis ein Administrator sie freigibt. Eine erfolgreiche Anmeldung setzt den Zähler zurück.
+
+Administratoren sehen unter **Benutzer → Gesperrte IP-Adressen**:
+
+- die gesperrten Adressen mit Zeitpunkt, Grund und *entsperren*,
+- *IP-Adresse oder Netz von Hand sperren*, z. B. `203.0.113.7` oder `203.0.113.0/24`
+  (die eigene Adresse lässt sich so nicht sperren),
+- die letzten Fehlversuche je IP-Adresse mit den versuchten Benutzernamen; *zurücksetzen*
+  löscht den Zähler.
+
+Hat sich der einzige Administrator selbst ausgesperrt, hilft im Container:
+
+```bash
+klassenkasse-admin blocklist           # Sperren anzeigen
+klassenkasse-admin unblock 192.0.2.10  # eine Adresse freigeben
+klassenkasse-admin unblock --all       # alle Sperren und Fehlversuche löschen
+```
+
+Die Zahl der erlaubten Fehlversuche lässt sich mit `KK_MAX_LOGIN_FAILURES` ändern
+([Konfiguration](configuration.md)). Hinter einem Reverse-Proxy unbedingt
+`KK_BEHIND_PROXY=1` setzen – sonst sieht die App nur die Adresse des Proxys und sperrt im
+Zweifel alle ([Reverse-Proxy](reverse-proxy.md)).
+
 ## Buchungen
 
 Eine Buchung hat Datum, Art (Einnahme/Ausgabe), Betrag, Zweck und optional eine
@@ -45,9 +73,9 @@ an und zählen nicht mehr bei den offenen Beträgen; sie lassen sich wieder öff
 
 ## Klassenliste
 
-Die Klassenliste zeigt alle Schüler/innen als Tabelle: Name (mit Notiz), Geburtstag,
-Anschrift, je eine Spalte für Erziehungsberechtigte/r 1 und 2 und den offenen Betrag aus
-allen offenen Sammlungen.
+Die Klassenliste zeigt alle Schüler/innen als Tabelle: Name (mit Notiz), Anschrift, je eine
+Spalte für Erziehungsberechtigte/r 1 und 2 und den offenen Betrag aus allen offenen
+Sammlungen.
 
 Jede/r Erziehungsberechtigte hat eigene Felder: Name, Telefon, E-Mail und eine Anschrift,
 falls sie von der des Kindes abweicht (z. B. bei getrennt lebenden Eltern).
@@ -72,7 +100,6 @@ Erkannt werden:
 | Feld | Überschriften (Groß-/Kleinschreibung egal) |
 |---|---|
 | Name | Name, Schüler/in, Kind – oder getrennt Vorname und Nachname |
-| Geburtstag | Geburtstag, Geburtsdatum, Geb. (`12.03.2014`, `12.3.14` oder Excel-Datum) |
 | Anschrift | Straße, PLZ, Ort (auch Postleitzahl, Wohnort) |
 | Erziehungsberechtigte/r 1 / 2 | wie im Export, z. B. „Erziehungsb. 1: Name“, „Erziehungsb. 2: Telefon“; Telefon, E-Mail ohne Nummer gehören zu 1 |
 | Notiz | Notiz, Bemerkung, Hinweis |

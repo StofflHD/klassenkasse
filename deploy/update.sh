@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 StofflHD
 # KK_SELF_UPDATE – wird als /usr/bin/update im Klassenkasse-Container installiert.
 #
 #   update            Klassenkasse auf die neueste Version von GitHub bringen
@@ -26,7 +28,7 @@ for a in "$@"; do
   case "$a" in
     --check) CHECK=1 ;;
     --force) FORCE=1 ;;
-    -h | --help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h | --help) sed -n '4,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "Unbekannte Option: $a (siehe --help)" ;;
   esac
 done

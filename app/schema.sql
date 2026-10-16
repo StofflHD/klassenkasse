@@ -1,3 +1,6 @@
+-- SPDX-License-Identifier: GPL-3.0-only
+-- Copyright (C) 2026 StofflHD
+
 PRAGMA journal_mode = WAL;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -8,15 +11,31 @@ CREATE TABLE IF NOT EXISTS users (
     created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+-- Brute-Force-Schutz: Fehlversuche bei der Anmeldung und gesperrte IP-Adressen/Netze
+CREATE TABLE IF NOT EXISTS login_failures (
+    id          INTEGER PRIMARY KEY,
+    ip          TEXT NOT NULL,
+    username    TEXT NOT NULL,
+    at          TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_login_failures_ip ON login_failures(ip, at);
+
+CREATE TABLE IF NOT EXISTS ip_blocks (
+    ip          TEXT PRIMARY KEY,           -- einzelne Adresse oder Netz, z. B. 10.0.0.0/24
+    blocked_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    created_by  TEXT NOT NULL,              -- "automatisch" oder der Administrator
+    reason      TEXT NOT NULL DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS students (
     id          INTEGER PRIMARY KEY,
     name        TEXT NOT NULL,
     active      INTEGER NOT NULL DEFAULT 1,
     created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
     -- Klassenliste. Ältere Datenbanken bringt migrate() in app.py auf diesen Stand;
-    -- dort bleiben die Spalten guardians, phone, phone2, email (0.2.0) und g1_mobile,
-    -- g2_mobile (0.3.0) ungenutzt stehen. Mehrere Telefonnummern: mit / getrennt.
-    birthday    TEXT,
+    -- dort bleiben die Spalten guardians, phone, phone2, email (0.2.0), g1_mobile,
+    -- g2_mobile (0.3.0) und birthday (bis 0.6.0) ungenutzt stehen.
+    -- Mehrere Telefonnummern: mit / getrennt.
     street      TEXT NOT NULL DEFAULT '',
     zip         TEXT NOT NULL DEFAULT '',
     city        TEXT NOT NULL DEFAULT '',
