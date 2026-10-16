@@ -13,7 +13,8 @@ systemctl restart klassenkasse
 | `KK_DB` | `/var/lib/klassenkasse/klassenkasse.db` | SQLite-Datenbank |
 | `KK_SECRET` | zufällig bei der Installation | Schlüssel für die Sitzungs-Cookies. Ändern meldet alle ab. |
 | `KK_BIND` | `0.0.0.0:8000` | Adresse und Port. `127.0.0.1:8000`, wenn ein Reverse-Proxy im selben Container läuft. |
-| `KK_BEHIND_PROXY` | `0` | `1`, wenn ein Reverse-Proxy davor steht (wertet `X-Forwarded-*` aus) |
+| `KK_TRUSTED_PROXIES` | leer | IP-Adressen oder Netze der eigenen Reverse-Proxys, mit Komma getrennt (z. B. `192.168.1.10`). Nur von dort wird `X-Forwarded-*` übernommen – siehe [Reverse-Proxy](reverse-proxy.md) |
+| `KK_BEHIND_PROXY` | `0` | Veraltet: `1` übernimmt `X-Forwarded-*` von **jedem** Aufrufer. Stattdessen `KK_TRUSTED_PROXIES` setzen |
 | `KK_COOKIE_SECURE` | `0` | `1`, wenn nur noch per HTTPS zugegriffen wird |
 | `KK_MAX_LOGIN_FAILURES` | `3` | Fehlgeschlagene Anmeldungen (je IP-Adresse, 24 h), nach denen die Adresse gesperrt wird |
 

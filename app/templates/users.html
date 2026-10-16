@@ -57,7 +57,15 @@
 <h2 id="sperrliste">Gesperrte IP-Adressen</h2>
 <p class="hint">Nach {{ max_failures }} fehlgeschlagenen Anmeldungen innerhalb von 24 Stunden wird eine IP-Adresse
   automatisch gesperrt, bis sie hier freigegeben wird. Gesperrte Adressen erreichen die Klassenkasse gar nicht
-  mehr. Deine IP-Adresse: <code>{{ my_ip }}</code></p>
+  mehr. Deine IP-Adresse: <code>{{ my_ip }}</code>{% if proxy_addr %} (über den Proxy <code>{{ proxy_addr }}</code>){% endif %}</p>
+{% if proxy_mode == 'any' %}
+<div class="flash error"><strong>Proxy-Einstellung unsicher:</strong> <code>KK_BEHIND_PROXY=1</code> ist gesetzt, aber
+  <code>KK_TRUSTED_PROXIES</code> nicht. Dann wird die Absenderadresse aus dem Header jedes Aufrufers geglaubt, und
+  wer am Proxy vorbei zugreift, kann die IP-Sperre umgehen. Bitte in <code>/etc/klassenkasse.env</code>
+  <code>KK_TRUSTED_PROXIES=</code> mit der IP-Adresse des Proxys setzen.</div>
+{% elif proxy_mode == 'trusted' %}
+<p class="small">Vertrauenswürdige Proxys: <code>{{ trusted }}</code></p>
+{% endif %}
 {% if blocks %}
 <div class="tablewrap">
 <table>

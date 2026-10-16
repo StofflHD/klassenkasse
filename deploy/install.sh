@@ -61,7 +61,9 @@ KK_KLASSE="$KLASSE"
 KK_DB=$DATA_DIR/klassenkasse.db
 KK_SECRET=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
 KK_BIND=0.0.0.0:8000
-# Auf 1 setzen, wenn ein Reverse-Proxy mit HTTPS davor steht (z. B. Nginx Proxy Manager, Caddy)
+# Reverse-Proxy mit HTTPS davor (z. B. Nginx Proxy Manager, Caddy)? Dann seine IP-Adresse
+# eintragen (mehrere mit Komma), damit Anmeldesperren den Besucher treffen, nicht den Proxy:
+#KK_TRUSTED_PROXIES=192.168.1.10
 KK_BEHIND_PROXY=0
 KK_COOKIE_SECURE=0
 EOF

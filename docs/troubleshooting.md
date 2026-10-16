@@ -42,12 +42,18 @@ klassenkasse-admin unblock 192.0.2.10
 ```
 
 Sind plötzlich alle gesperrt und taucht in der Sperrliste nur eine einzige Adresse auf (die
-des Reverse-Proxys), fehlt `KK_BEHIND_PROXY=1` – siehe [Reverse-Proxy](reverse-proxy.md).
+des Reverse-Proxys), fehlt `KK_TRUSTED_PROXIES` – siehe [Reverse-Proxy](reverse-proxy.md).
+Danach die Sperre des Proxys mit `klassenkasse-admin unblock <IP des Proxys>` aufheben.
+
+## Dienst startet nicht nach Änderung an `KK_TRUSTED_PROXIES`
+
+`journalctl -u klassenkasse -n 20` zeigt den ungültigen Eintrag. Erlaubt sind IP-Adressen
+und Netze (`192.168.1.10`, `10.0.0.0/8`, `2001:db8::/64`), mit Komma getrennt.
 
 ## „Ungültige Anfrage (evtl. Seite neu laden)“
 
 Das Formular war zu alt (Schutz gegen gefälschte Anfragen). Seite neu laden und noch einmal
-absenden. Passiert das ständig hinter einem Reverse-Proxy: `KK_BEHIND_PROXY=1` gesetzt? Mit
+absenden. Passiert das ständig hinter einem Reverse-Proxy: `KK_TRUSTED_PROXIES` gesetzt? Mit
 `KK_COOKIE_SECURE=1` geht die Anmeldung nur über HTTPS.
 
 ## Passwort vergessen

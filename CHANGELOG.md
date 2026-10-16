@@ -20,6 +20,10 @@ Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmo
   Adressen oder Netze (auch IPv6) von Hand sperren, letzte Fehlversuche ansehen und
   zurücksetzen. Im Container: `klassenkasse-admin blocklist` und
   `klassenkasse-admin unblock IP|--all`.
+- **`KK_TRUSTED_PROXIES`:** IP-Adressen/Netze der eigenen Reverse-Proxys. Nur von dort wird
+  `X-Forwarded-For` übernommen; wer am Proxy vorbei zugreift und sich eine Adresse
+  ausdenkt, wird mit seiner echten Adresse gezählt. Auch Proxy-Ketten (z. B. Cloudflare →
+  Proxy Manager) werden richtig aufgelöst. Ein ungültiger Eintrag verhindert den Start.
 - Copyright- und Lizenzhinweis (GPL-3.0) im Footer, in der README und als SPDX-Kopf in den
   Quelldateien; Links zu GitHub und Changelog im Footer.
 
@@ -34,8 +38,14 @@ Eine Installation aktualisierst du mit `update` im Container oder auf dem Proxmo
   `update` vorher anlegt, enthält sie noch. Eine Spalte „Geburtstag“ in Import-Dateien wird
   ignoriert.
 
-**Hinter einem Reverse-Proxy:** `KK_BEHIND_PROXY=1` muss gesetzt sein, sonst sperrt die IP-Sperre
-im Zweifel den Proxy und damit alle (siehe [Reverse-Proxy](docs/reverse-proxy.md)).
+### Veraltet
+- `KK_BEHIND_PROXY=1` übernimmt `X-Forwarded-For` von jedem Aufrufer und funktioniert noch,
+  die Benutzerseite warnt aber davor.
+
+**Hinter einem Reverse-Proxy – bitte vor oder direkt nach dem Update:** in
+`/etc/klassenkasse.env` `KK_TRUSTED_PROXIES=<IP des Proxys>` eintragen und
+`systemctl restart klassenkasse`. Ohne diese Einstellung sieht die IP-Sperre nur den Proxy
+und sperrt nach drei Tippfehlern im Zweifel alle (siehe [Reverse-Proxy](docs/reverse-proxy.md)).
 
 ## [0.6.0] – 2026-10-15
 

@@ -20,6 +20,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import tableio
+from proxy import TrustedProxyFix, parse_trusted
 from tableio import euro_plain
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,8 +46,19 @@ app.config.update(
     MAX_CONTENT_LENGTH=5 * 1024 * 1024,     # Uploads (Import)
     MAX_FORM_MEMORY_SIZE=5 * 1024 * 1024,   # Bestätigung eines großen Imports
 )
-if os.environ.get("KK_BEHIND_PROXY") == "1":
+# Reverse-Proxy: KK_TRUSTED_PROXIES nennt die Proxys, deren X-Forwarded-* geglaubt wird.
+# KK_BEHIND_PROXY=1 allein (bis 0.6.0) glaubt den Headern von jedem – nur noch als Notlösung.
+TRUSTED_PROXIES = parse_trusted(os.environ.get("KK_TRUSTED_PROXIES"))
+if TRUSTED_PROXIES:
+    PROXY_MODE = "trusted"
+    app.wsgi_app = TrustedProxyFix(app.wsgi_app, TRUSTED_PROXIES)
+elif os.environ.get("KK_BEHIND_PROXY") == "1":
+    PROXY_MODE = "any"
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    app.logger.warning("KK_BEHIND_PROXY=1 ohne KK_TRUSTED_PROXIES: X-Forwarded-For wird von "
+                       "jedem geglaubt, die IP-Sperre lässt sich am Proxy vorbei umgehen.")
+else:
+    PROXY_MODE = "off"
 
 # Brute-Force-Schutz: nach so vielen Fehlversuchen (innerhalb von 24 h, seit der letzten
 # erfolgreichen Anmeldung) wird die IP-Adresse gesperrt, bis ein Administrator sie freigibt
@@ -232,7 +244,7 @@ def can(role):
 
 # ---------------------------------------------------------------- Brute-Force-Schutz
 def client_ip():
-    """IP-Adresse des Aufrufers (hinter einem Reverse-Proxy nur mit KK_BEHIND_PROXY=1 richtig)."""
+    """IP-Adresse des Aufrufers (hinter einem Reverse-Proxy nur mit KK_TRUSTED_PROXIES richtig)."""
     return request.remote_addr or ""
 
 
@@ -944,7 +956,10 @@ def users():
     failures = db.execute("""SELECT ip, COUNT(*) AS n, MAX(at) AS last, GROUP_CONCAT(DISTINCT username) AS names
                              FROM login_failures GROUP BY ip ORDER BY last DESC LIMIT 20""").fetchall()
     return render_template("users.html", rows=rows, blocks=blocks, failures=failures,
-                           my_ip=client_ip(), max_failures=MAX_LOGIN_FAILURES)
+                           my_ip=client_ip(), max_failures=MAX_LOGIN_FAILURES,
+                           proxy_mode=PROXY_MODE, proxy_addr=request.environ.get("kk.proxy_addr"),
+                           trusted=", ".join(str(n.network_address) if n.num_addresses == 1 else str(n)
+                                             for n in TRUSTED_PROXIES))
 
 
 @app.route("/benutzer/sperrliste", methods=["POST"])

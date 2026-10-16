@@ -44,8 +44,8 @@ klassenkasse-admin unblock --all       # alle Sperren und Fehlversuche löschen
 
 Die Zahl der erlaubten Fehlversuche lässt sich mit `KK_MAX_LOGIN_FAILURES` ändern
 ([Konfiguration](configuration.md)). Hinter einem Reverse-Proxy unbedingt
-`KK_BEHIND_PROXY=1` setzen – sonst sieht die App nur die Adresse des Proxys und sperrt im
-Zweifel alle ([Reverse-Proxy](reverse-proxy.md)).
+`KK_TRUSTED_PROXIES` mit der Adresse des Proxys setzen – sonst sieht die App nur den Proxy
+und sperrt im Zweifel alle ([Reverse-Proxy](reverse-proxy.md)).
 
 ## Buchungen
 

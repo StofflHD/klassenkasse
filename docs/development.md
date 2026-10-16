@@ -22,6 +22,7 @@ deploy/update.sh           wird zu /usr/bin/update im Container
 deploy/*.service, *.timer  systemd: App (Gunicorn) und tägliche Sicherung
 app/app.py                 Flask-App: Routen, Rechte, Import-Logik, CLI (create-user, backup, version)
 app/tableio.py             Tabellen lesen/schreiben: CSV und Excel (openpyxl)
+app/proxy.py               echte Client-Adresse hinter vertrauenswürdigen Proxys (KK_TRUSTED_PROXIES)
 app/schema.sql             Tabellen und Trigger (wird bei jedem Start angewendet)
 app/templates/, static/    Oberfläche
 VERSION                    aktuelle Version, von update.sh mit GitHub verglichen
